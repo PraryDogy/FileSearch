@@ -104,8 +104,7 @@ class SearchApp(QWidget):
 
     def open_btn(self, path: str):
         subprocess.run(["open", "-R", path])
-        if not os.path.exists(path):
-            print(path, "not exists")
+        print(path, "not exists")
 
         # RevealFiles(files_list=[path])
 
