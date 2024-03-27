@@ -4,9 +4,9 @@ import subprocess
 import sys
 from functools import partial
 
-from PyQt6.QtGui import QGuiApplication, QScreen
-from PyQt6.QtWidgets import (QApplication, QFileDialog, QLineEdit, QPushButton,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtWidgets import (QApplication, QFileDialog, QLineEdit, QMessageBox,
+                             QPushButton, QVBoxLayout, QWidget)
 
 from cfg import Cfg
 from migrate_catalog import MigrateCatalog
@@ -48,7 +48,7 @@ class SearchApp(QWidget):
         self.catalog_check()
 
     def catalog_check(self):
-        if not os.path.exists(Cfg.data["catalog"]) or Cfg.data["first"]:
+        if Cfg.data["first"]:
             self.setDisabled(True)
 
             new_dir = QFileDialog.getExistingDirectory(self)
@@ -78,7 +78,18 @@ class SearchApp(QWidget):
         self.update_btn.setText("Обновить базу данных")
         self.setDisabled(False)
     
+    def warning(self):
+        message_box = QMessageBox()
+        message_box.setIcon(QMessageBox.Icon.Warning)
+        message_box.setWindowTitle("Предупреждение")
+        message_box.setText("Сетевой диск не подключен")
+        message_box.exec()
+
     def search(self):
+        if not os.path.exists(Cfg.data["catalog"]):
+            self.warning()
+            return
+
         if self.btns:
             for i in self.btns:
                 try:
@@ -105,6 +116,10 @@ class SearchApp(QWidget):
         self.setFocus()
 
     def open_btn(self, path: str):
+        if not os.path.exists(Cfg.data["catalog"]):
+            self.warning()
+            return
+
         subprocess.run(["open", "-R", path])
         print(path, "not exists")
 
