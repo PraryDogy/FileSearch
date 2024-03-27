@@ -32,8 +32,8 @@ class SearchApp(QWidget):
         
         
         self.search_button = QPushButton("Поиск", self)
-        # self.search_button.clicked.connect(self.search)
-        self.search_button.mouseReleaseEvent = lambda e: self.search()
+        self.search_button.clicked.connect(partial(self.search))
+        # self.search_button.mouseReleaseEvent = lambda e: self.search()
         
         self.v_layout.addWidget(self.update_btn)
         self.v_layout.addWidget(self.input_text)
@@ -101,6 +101,8 @@ class SearchApp(QWidget):
                 self.v_layout.addWidget(btn)
 
                 self.btns.append(btn)
+
+        self.setFocus()
 
     def open_btn(self, path: str):
         subprocess.run(["open", "-R", path])
