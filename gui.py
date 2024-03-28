@@ -4,6 +4,7 @@ import subprocess
 import sys
 from functools import partial
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QLineEdit, QMessageBox,
                              QPushButton, QVBoxLayout, QWidget)
@@ -63,7 +64,6 @@ class SearchApp(QWidget):
 
             self.migrate_thread = MigrateCatalog(old_dir, new_dir)
             self.migrate_thread.finished.connect(self.finalize_update_db)
-            self.setDisabled(True)
             self.migrate_thread.start()
 
     def update_db(self):
@@ -74,6 +74,7 @@ class SearchApp(QWidget):
         self.t1.start()
 
     def finalize_update_db(self):
+        self.setDisabled(False)
         self.update_btn.setText("Обновить базу данных")
     
     def warning(self):
@@ -107,6 +108,7 @@ class SearchApp(QWidget):
             for name, src in res:
                 btn = QPushButton(name, self)
                 btn.clicked.connect(partial(self.open_btn, src))
+                btn.setStyleSheet("text-align:left")
                 self.v_layout.addWidget(btn)
 
                 self.btns.append(btn)
