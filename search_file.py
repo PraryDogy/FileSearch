@@ -1,22 +1,28 @@
 import json
 from cfg import Cfg
 from collections import defaultdict, OrderedDict
+import os
 
-raw = "Raw"
-raw_premium = "Raw_Premium"
 
-png = "Png"
-png_premium = "Png_Premium"
+# ready = "Ready"
+# ready_premium = "Ready_Premium"
 
-ready = "Ready"
-ready_premium = "Ready_Premium"
+# black_background = "Black Background"
 
-black_background = "Black Background"
+# templates = [
+#     "/" + i + "/"
+#     for i in (raw, raw_premium, png, png_premium, ready, ready_premium, black_background)
+#     ]
 
-templates = [
-    "/" + i + "/"
-    for i in (raw, raw_premium, png, png_premium, ready, ready_premium, black_background)
-    ]
+
+templates = {
+    "/RAW/": "Исходник",
+    "/Raw_Premium/": "Исходник",
+    "/Png/": "PNG",
+    "/Png_Premium/": "PNG",
+    "/Ready/": "Послойник",
+    "/Ready_Premium/": "Послойник",
+    }
 
 
 def search_file(article: str):
@@ -32,14 +38,17 @@ def search_file(article: str):
             if article in x
             ]
 
-        beaty_res = {
-            f"{src.split('/')[-1]}": src
+        beaty_res = [
+            [
+                f"{templates[tmp]}: {src.split(os.sep)[-1]}",
+                src
+                ]
             for tmp in templates
             for src in beaty_res
             if tmp in src
-            }
+            ]
 
-        return OrderedDict(sorted(beaty_res.items()))
+        return beaty_res
 
     except KeyError:
         print("no file")

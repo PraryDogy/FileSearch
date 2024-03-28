@@ -71,12 +71,10 @@ class SearchApp(QWidget):
 
         self.t1 = Scaner()
         self.t1.finished.connect(self.finalize_update_db)
-        self.setDisabled(True)
         self.t1.start()
 
     def finalize_update_db(self):
         self.update_btn.setText("Обновить базу данных")
-        self.setDisabled(False)
     
     def warning(self):
         message_box = QMessageBox()
@@ -106,9 +104,9 @@ class SearchApp(QWidget):
         res: dict = search_file(text)
 
         if res:
-            for k, v in res.items():
-                btn = QPushButton(k, self)
-                btn.clicked.connect(partial(self.open_btn, v))
+            for name, src in res:
+                btn = QPushButton(name, self)
+                btn.clicked.connect(partial(self.open_btn, src))
                 self.v_layout.addWidget(btn)
 
                 self.btns.append(btn)
