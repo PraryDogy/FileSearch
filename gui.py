@@ -121,8 +121,6 @@ class SearchApp(QWidget):
             return
 
         subprocess.run(["open", "-R", path])
-        print(path, "not exists")
-
         # RevealFiles(files_list=[path])
 
     def center(self):

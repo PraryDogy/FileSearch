@@ -1,6 +1,6 @@
 import json
 from cfg import Cfg
-
+from collections import defaultdict, OrderedDict
 
 raw = "Raw"
 raw_premium = "Raw_Premium"
@@ -22,18 +22,24 @@ templates = [
 def search_file(article: str):
 
     with open(Cfg.catalog_json_dir, "r", encoding='utf-8') as json_file:
-        data = json.loads(json_file.read())
+        data: dict = json.loads(json_file.read())
 
     try:
-        res = data[article]
-        beaty_res = {}
+        beaty_res = [
+            x
+            for art, src_list in data.items()
+            for x in src_list
+            if article in x
+            ]
 
-        for temp in templates:
-            for path in res:
-                if temp in path:
-                    beaty_res[temp.replace("/", "")] = path
+        beaty_res = {
+            f"{src.split('/')[-1]}": src
+            for tmp in templates
+            for src in beaty_res
+            if tmp in src
+            }
 
-        return beaty_res
+        return OrderedDict(sorted(beaty_res.items()))
 
     except KeyError:
         print("no file")
