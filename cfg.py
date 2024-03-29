@@ -40,7 +40,7 @@ class Cfg:
 
         data = Cfg.read_cfg_json_file()
 
-        if data(type) != dict:
+        if type(data) != dict:
             Cfg.write_cfg_json_file()
             data = Cfg.read_cfg_json_file()
 

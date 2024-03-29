@@ -60,25 +60,35 @@ class SearchApp(QWidget):
 
     def catalog_check(self):
         if Cfg.first_load:
+            self.disable_gui()
 
-            new_dir = QFileDialog.getExistingDirectory(self)
+            # new_dir = QFileDialog.getExistingDirectory(self)
 
-            if new_dir:
+            # if new_dir:
 
-                old_dir = Cfg.images_dir
+            #     old_dir = Cfg.images_dir
 
-                Cfg.images_dir = new_dir
-                Cfg.first_load = False
+            #     Cfg.images_dir = new_dir
+            #     Cfg.first_load = False
+            #     Cfg.write_cfg_json_file()
 
-                Cfg.write_cfg_json_file()
+            # self.migrate_thread = CatalogMigrateThread(old_dir, new_dir)
+            # self.migrate_thread.finished.connect(self.finalize_migrate)
+            # self.setDisabled(True)
+            # self.migrate_thread.start()
 
-                with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
-                    json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
+    def disable_gui(self):
+        self.remove_article_btns()
+        for i in (self.update_btn, self.input_text, self.search_button):
+            i.setDisabled(True)
 
-            self.migrate_thread = CatalogMigrateThread(old_dir, new_dir)
-            self.migrate_thread.finished.connect(self.finalize_migrate)
-            self.setDisabled(True)
-            self.migrate_thread.start()
+    def remove_article_btns(self):
+        for i in self.btns:
+            try:
+                i.deleteLater()
+            except Exception:
+                pass
+        self.btns.clear()
 
     def update_db(self):
         self.update_btn.setText("Подождите...")
