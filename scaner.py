@@ -13,9 +13,9 @@ class Scaner(QThread):
 
     def run(self):
         exts = (".png", ".tif", ".tiff", ".psd", ".psb", ".jpg", ".jpeg")
-        data = defaultdict(list)
+        new_data = defaultdict(list)
 
-        for root, dirs, files in os.walk(Cfg.data["catalog"]):
+        for root, dirs, files in os.walk(Cfg.images_dir):
 
             files = [
                 i
@@ -29,9 +29,7 @@ class Scaner(QThread):
             for file in files:
                 src = os.path.join(root, file)
                 filename = os.path.split(src)[-1].split(".")[0]
-                data[filename].append(src)
+                new_data[filename].append(src)
 
-        with open(Cfg.catalog_json_file, "w", encoding='utf-8') as json_file:
-            json.dump(data, json_file, ensure_ascii=False, indent=2)
-
+        Cfg.write_catalog_json_file(new_data)
         self.finished.emit()
