@@ -70,7 +70,7 @@ class Cfg:
             json.dump(new_data, file, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def read_catalog_json_file(self) -> dict:
+    def read_catalog_json_file() -> dict:
         with open(Cfg.catalog_json_file, "r", encoding='utf-8') as json_file:
             return json.loads(json_file.read())
         

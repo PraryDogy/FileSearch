@@ -15,17 +15,13 @@ class MigrateCatalog(QThread):
         self.new_dir = new_dir
             
     def run(self):
-        with open(Cfg.catalog_json_file, "r", encoding="utf-8") as file:
-            data: dict = json.load(file)
-
+        data: dict = Cfg.read_catalog_json_file()
         new_data = defaultdict(list)
 
         for k, v in data.items():
             for i in v:
                 i: str = i.replace(self.old_dir, self.new_dir)
                 new_data[k].append(i)
-            
-        with open(Cfg.catalog_json_file, "w", encoding="utf=8") as file:
-            json.dump(new_data, file, ensure_ascii=False, indent=2)
 
+        Cfg.write_catalog_json_file(new_data)
         self.finished.emit()
