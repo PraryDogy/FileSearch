@@ -4,7 +4,10 @@ import shutil
 
 class Cfg:
     app_name = "MiuzCatSearch"
-    app_ver = "1.0.1"
+
+    app_ver: int = "1.0.3"
+    images_dir: str = "/Volumes/Shares-1/Studio/Photo/Catalog"
+    first_load: bool = True
 
     home_dir = os.path.expanduser("~")
 
@@ -25,8 +28,6 @@ class Cfg:
         "cfg.json"
         )
     
-    images_dir = None
-
     @staticmethod
     def check():
         os.makedirs(Cfg.app_dir, exist_ok=True)
@@ -35,39 +36,38 @@ class Cfg:
             shutil.copy2("catalog.json", Cfg.catalog_json_file)
 
         if not os.path.exists(Cfg.cfg_json_file):
-            shutil.copy2("cfg.json", Cfg.cfg_json_file)
+            Cfg.write_cfg_json_file(Cfg.get_default_settings())
 
         data = Cfg.read_cfg_json_file()
 
-        try:
+        if data(type) != dict:
+            Cfg.write_cfg_json_file(Cfg.get_default_settings())
+            data = Cfg.read_cfg_json_file()
+
+        if "app_ver" not in data or data["app_ver"] != Cfg.app_ver:
+            data["app_ver"] = Cfg.app_ver
+            data["first_load"] = Cfg.first_load # True
             data["images_dir"] = Cfg.images_dir
-        except Exception as e:
-            ...
+            Cfg.write_cfg_json_file(data)
 
-
-
-
-        #     data["images_dir"] = Cfg.images_dir
-
-        # if type(Cfg.data) != dict:
-        #     shutil.copy2("cfg.json", Cfg.cfg_json_dir)
-        #     with open(Cfg.cfg_json_dir, "r", encoding="utf=8") as file:
-        #         Cfg.data = json.load(file)
-
-        # if "first" not in Cfg.data:
-        #     Cfg.data["first"] = True
-
+        else:
+            Cfg.first_load = data["first_load"]
+            Cfg.images_dir = data["images_dir"]
 
 
     @staticmethod
     def read_cfg_json_file() -> dict:
-        with open(Cfg.cfg_json_file, "r", encoding="utf=8") as file:
-            return json.load(file)
-        
+        try:
+            with open(Cfg.cfg_json_file, "r", encoding="utf=8") as file:
+                return json.load(file)
+        except Exception as e:
+            print(e)
+            return []
+
     @staticmethod
-    def write_cfg_json_file():
+    def write_cfg_json_file(new_data: dict):
         with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
-            json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
+            json.dump(new_data, file, ensure_ascii=False, indent=2)
 
     @staticmethod
     def read_catalog_json_file(self) -> dict:
@@ -78,3 +78,11 @@ class Cfg:
     def write_catalog_json_file(new_data: dict):
         with open(Cfg.catalog_json_file, "w", encoding="utf=8") as file:
             json.dump(new_data, file, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def get_default_settings():
+        return {
+            "app_ver": Cfg.app_ver,
+            "images_dir": Cfg.images_dir,
+            "first_load": True
+            }
