@@ -63,6 +63,11 @@ class SearchApp(QWidget):
         self.h_layout_update.addWidget(self.update_btn)
 
         self.input_text = QLineEdit()
+        self.input_text.setFixedHeight(30)
+        self.input_text.setStyleSheet(
+            f"""
+            padding-left: 5px;
+            """)
         self.input_text.setPlaceholderText("Вставьте артикул или ссылку")
         
         self.search_button = QPushButton("Поиск")
