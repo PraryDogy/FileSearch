@@ -59,6 +59,11 @@ class SearchApp(QWidget):
         self.catalog_check()
 
     def catalog_check(self):
+        try:
+            os.listdir(Cfg.data["catalog"])
+        except Exception as e:
+            print(f"gui.pu > catalog check > listdir > {e}")
+
         if Cfg.data["first"]:
             new_dir = QFileDialog.getExistingDirectory(self)
 
