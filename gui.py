@@ -13,7 +13,7 @@ from cfg import Cfg
 from catalog_mirgrate import CatalogMigrateThread
 from reveal_files import RevealFiles
 from catalog_update import CatalogUpdateThread
-from search_file import search_file
+from catalog_search import catalog_search_file
 
 
 class SearchApp(QWidget):
@@ -117,7 +117,7 @@ class SearchApp(QWidget):
         if not text or len(text) < 5:
             return
 
-        res: dict = search_file(text)
+        res: dict = catalog_search_file(text)
 
         if res:
             for name, src in res:
