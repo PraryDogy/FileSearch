@@ -21,7 +21,6 @@ APP = ["gui.py"]
 
 DATA_FILES = [
     "catalog.json",
-    "cfg.json",
     "reveal_files.scpt",
     ]
 
