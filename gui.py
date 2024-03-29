@@ -43,7 +43,7 @@ class SearchApp(QWidget):
         
         
         self.search_button = QPushButton("Поиск", self)
-        self.search_button.clicked.connect(partial(self.search))
+        self.search_button.clicked.connect(partial(self.btn_search_cmd))
         # self.search_button.mouseReleaseEvent = lambda e: self.search()
         
         self.v_layout.addWidget(self.update_btn)
@@ -92,17 +92,16 @@ class SearchApp(QWidget):
         message_box.setText("Сетевой диск не подключен")
         message_box.exec()
 
-    def search(self):
+    def btn_search_cmd(self):
         if not os.path.exists(Cfg.data["catalog"]):
             self.warning()
             return
 
-        if self.btns:
-            for i in self.btns:
-                try:
-                    i.deleteLater()
-                except RuntimeError:
-                    pass
+        for i in self.btns:
+            try:
+                i.deleteLater()
+            except RuntimeError:
+                pass
 
         self.setFocus()
         text: str = self.input_text.text()
