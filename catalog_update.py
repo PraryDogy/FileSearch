@@ -5,7 +5,7 @@ from cfg import Cfg
 from PyQt6.QtCore import QThread, pyqtSignal
 
 
-class UpdateCatalogThread(QThread):
+class CatalogUpdateThread(QThread):
     finished = pyqtSignal()
 
     def __init__(self):

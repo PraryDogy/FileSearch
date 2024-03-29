@@ -6,7 +6,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from cfg import Cfg
 
 
-class MigrateCatalog(QThread):
+class CatalogMigrateThread(QThread):
     finished = pyqtSignal()
 
     def __init__(self, old_dir: str, new_dir: str):

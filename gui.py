@@ -10,9 +10,9 @@ from PyQt6.QtWidgets import (QApplication, QFileDialog, QLineEdit, QMessageBox,
                              QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QLabel)
 
 from cfg import Cfg
-from migrate_catalog import MigrateCatalog
+from catalog_mirgrate import CatalogMigrateThread
 from reveal_files import RevealFiles
-from update_catalog import UpdateCatalogThread
+from catalog_update import CatalogUpdateThread
 from search_file import search_file
 
 
@@ -75,14 +75,14 @@ class SearchApp(QWidget):
                 with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
                     json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
-            self.migrate_thread = MigrateCatalog(old_dir, new_dir)
+            self.migrate_thread = CatalogMigrateThread(old_dir, new_dir)
             self.migrate_thread.finished.connect(self.finalize_migrate)
             self.setDisabled(True)
             self.migrate_thread.start()
 
     def update_db(self):
         self.update_btn.setText("Подождите...")
-        self.t1 = UpdateCatalogThread()
+        self.t1 = CatalogUpdateThread()
         self.t1.finished.connect(self.finalize_update_db)
         self.t1.start()
 
@@ -165,7 +165,7 @@ class SearchApp(QWidget):
             with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
                 json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
-            self.migrate_thread = MigrateCatalog(old_dir, new_dir)
+            self.migrate_thread = CatalogMigrateThread(old_dir, new_dir)
             self.migrate_thread.finished.connect(self.finalize_migrate)
             self.setDisabled(True)
             self.migrate_thread.start()
