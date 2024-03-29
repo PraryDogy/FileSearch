@@ -20,7 +20,7 @@ class SearchApp(QWidget):
     def __init__(self):
         Cfg
         super().__init__()
-        self.setWindowTitle("Поиск")
+        self.setWindowTitle(Cfg.app_name)
         self.setGeometry(100, 100, 300, 150)
         
         self.v_layout = QVBoxLayout()
