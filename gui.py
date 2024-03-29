@@ -7,7 +7,7 @@ from functools import partial
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QLineEdit, QMessageBox,
-                             QPushButton, QVBoxLayout, QWidget)
+                             QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QLabel)
 
 from cfg import Cfg
 from migrate_catalog import MigrateCatalog
@@ -24,6 +24,16 @@ class SearchApp(QWidget):
         self.setGeometry(100, 100, 300, 150)
         
         self.v_layout = QVBoxLayout()
+
+        self.h_layout = QHBoxLayout()
+        self.v_layout.addLayout(self.h_layout)
+
+        self.browse_btn = QPushButton("Обзор", self)
+        self.browse_btn.clicked.connect(self.choose_catalog)
+        self.h_layout.addWidget(self.browse_btn)
+
+        self.browse_lbl = QLabel(Cfg.data["catalog"])
+        self.h_layout.addWidget(self.browse_lbl)
 
         self.update_btn = QPushButton("Обновить базу данных", self)
         self.update_btn.clicked.connect(self.update_db)
@@ -51,7 +61,6 @@ class SearchApp(QWidget):
     def catalog_check(self):
         if Cfg.data["first"]:
             self.setDisabled(True)
-
             new_dir = QFileDialog.getExistingDirectory(self)
 
             if new_dir:
@@ -68,7 +77,6 @@ class SearchApp(QWidget):
 
     def update_db(self):
         self.update_btn.setText("Подождите...")
-
         self.t1 = Scaner()
         self.t1.finished.connect(self.finalize_update_db)
         self.t1.start()
@@ -136,7 +144,25 @@ class SearchApp(QWidget):
         # Центрируем окно по центру экрана
         window_geometry.moveCenter(screen_geometry.center())
         self.move(window_geometry.topLeft())
+        
+    def choose_catalog(self):
+        new_dir = QFileDialog.getExistingDirectory(self)
 
+        if new_dir:
+            old_dir = Cfg.data["catalog"]
+            Cfg.data["catalog"] = new_dir
+            self.browse_lbl.setText(new_dir)
+
+            with open(Cfg.cfg_json_dir, "w", encoding="utf=8") as file:
+                json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
+
+            self.migrate_thread = MigrateCatalog(old_dir, new_dir)
+            self.migrate_thread.finished.connect(self.finalize_update_db)
+            self.setDisabled(True)
+            self.migrate_thread.start()
+
+    def finalize_migrate(self):
+        self.setDisabled(False)
 
 if __name__ == "__main__":
     Cfg.check()
