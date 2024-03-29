@@ -22,7 +22,9 @@ class SearchApp(QWidget):
         self.setWindowTitle(Cfg.app_name)
         self.btns = []
 
-        # self.setGeometry(100, 100, 300, 150)
+        # self.setMinimumSize(350, 215)
+
+        self.resize(350, 215)
 
         self.init_ui()
         self.setFocus()
@@ -48,6 +50,7 @@ class SearchApp(QWidget):
         self.h_layout_browse.addWidget(self.browse_btn)
 
         self.browse_lbl = QLabel(Cfg.images_dir)
+        self.browse_lbl.setWordWrap(True)
         self.h_layout_browse.addWidget(self.browse_lbl)
 
         self.h_layout_browse.addStretch()
@@ -61,11 +64,6 @@ class SearchApp(QWidget):
         self.update_btn = QPushButton("Обновить каталог")
         self.update_btn.clicked.connect(self.update_btn_cmd)
         self.h_layout_update.addWidget(self.update_btn)
-
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.h_layout_update.addWidget(self.progress_bar)
 
         self.input_text = QLineEdit()
         self.input_text.setPlaceholderText("Вставьте артикул или ссылку")
@@ -159,11 +157,12 @@ class SearchApp(QWidget):
                 self.btns.append(btn)
 
     def article_btn_cmd(self, path: str):
-        print("open", path)
-        subprocess.run(["open", "-R", path])
-
-        if not os.path.exists(Cfg.images_dir):
-            self.warning("Сетевой диск не подключен")
+        if os.path.exists(path):
+            subprocess.run(["open", "-R", path])
+        else:
+            self.warning(
+                "Сетевой диск не подключен\n"
+                "или неверно указан каталог")
 
         # RevealFiles(files_list=[path])
 
