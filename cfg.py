@@ -29,7 +29,7 @@ class Cfg:
         )
     
     @staticmethod
-    def check():
+    def check_files():
         os.makedirs(Cfg.app_dir, exist_ok=True)
 
         if not os.path.exists(Cfg.catalog_json_file):

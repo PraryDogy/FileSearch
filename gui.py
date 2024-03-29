@@ -3,7 +3,7 @@ import subprocess
 import sys
 from functools import partial
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QVBoxLayout,
@@ -27,7 +27,11 @@ class SearchApp(QWidget):
         self.init_ui()
         self.setFocus()
         self.center()
-        self.error_check()
+
+        after = QTimer(self)
+        after.setSingleShot(True)
+        after.timeout.connect(self.error_check)
+        after.start(300)
 
     def init_ui(self):
         self.v_layout = QVBoxLayout()
@@ -60,7 +64,10 @@ class SearchApp(QWidget):
     def error_check(self):
         if Cfg.first_load:
             self.gui_switch(setDisabled=True)
-            self.choose_catalog()
+            self.warning((
+                "Приложение обновлено\n"
+                "Нажмите кнопку \"Обзор\" и укажите каталог изображений"
+                ))
 
     def choose_catalog(self):
         new_dir = QFileDialog.getExistingDirectory(self)
@@ -102,16 +109,15 @@ class SearchApp(QWidget):
     def finalize_update_btn_cmd(self):
         self.update_btn.setText("Обновить базу данных")
     
-    def warning(self):
+    def warning(self, text):
         message_box = QMessageBox()
-        message_box.setIcon(QMessageBox.Icon.Warning)
-        message_box.setWindowTitle("Предупреждение")
-        message_box.setText("Сетевой диск не подключен")
+        message_box.setIcon(QMessageBox.Icon.Information)
+        message_box.setText(text)
         message_box.exec()
 
     def btn_search_cmd(self):
-        if not os.path.exists(Cfg.data["catalog"]):
-            self.warning()
+        if not os.path.exists(Cfg.images_dir):
+            self.warning("Сетевой диск не подключен")
             return
 
         self.remove_article_btns()
@@ -139,7 +145,7 @@ class SearchApp(QWidget):
         subprocess.run(["open", "-R", path])
 
         if not os.path.exists(Cfg.images_dir):
-            self.warning()
+            self.warning("Сетевой диск не подключен")
 
         # RevealFiles(files_list=[path])
 
@@ -152,7 +158,7 @@ class SearchApp(QWidget):
         
 
 if __name__ == "__main__":
-    Cfg.check()
+    Cfg.check_files()
 
     if os.path.exists("lib"): 
         #lib folder appears when we pack this project to .app with py2app
