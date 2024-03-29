@@ -22,8 +22,6 @@ class SearchApp(QWidget):
         self.setWindowTitle(Cfg.app_name)
         self.btns = []
 
-        # self.setMinimumSize(350, 215)
-
         self.resize(350, 215)
 
         self.init_ui()
@@ -51,9 +49,8 @@ class SearchApp(QWidget):
 
         self.browse_lbl = QLabel(Cfg.images_dir)
         self.browse_lbl.setWordWrap(True)
+        self.set_browse_lbl_h()
         self.h_layout_browse.addWidget(self.browse_lbl)
-
-        self.h_layout_browse.addStretch()
 
         # 2 row
 
@@ -74,7 +71,7 @@ class SearchApp(QWidget):
         self.v_layout.addWidget(self.input_text)
         self.v_layout.addWidget(self.search_button)
 
-        self.v_layout.addStretch()
+        # self.v_layout.addStretch()
         
         self.setLayout(self.v_layout)
 
@@ -101,6 +98,7 @@ class SearchApp(QWidget):
     def finalize_choose_catalog(self):
         self.gui_switch(setDisabled=False)
         self.browse_lbl.setText(Cfg.images_dir)
+        self.set_browse_lbl_h()
 
     def gui_switch(self, setDisabled: bool):
         self.remove_article_btns()
@@ -172,9 +170,12 @@ class SearchApp(QWidget):
         window_geometry = self.frameGeometry()
         window_geometry.moveCenter(screen_geometry.center())
         self.move(window_geometry.topLeft())
+
+    def set_browse_lbl_h(self):
+        lbl_h = 30
+        num_lines = self.browse_lbl.text().count('\n') + 1
+        self.browse_lbl.setFixedHeight(lbl_h * num_lines)
     
-
-
 if __name__ == "__main__":
     Cfg.check_files()
 
