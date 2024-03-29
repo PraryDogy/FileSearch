@@ -124,11 +124,13 @@ class SearchApp(QWidget):
         self.setFocus()
 
     def open_btn(self, path: str):
+        print("open", path)
+        subprocess.run(["open", "-R", path])
+
         if not os.path.exists(Cfg.data["catalog"]):
             self.warning()
             return
 
-        subprocess.run(["open", "-R", path])
         # RevealFiles(files_list=[path])
 
     def center(self):
