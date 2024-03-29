@@ -72,7 +72,7 @@ class SearchApp(QWidget):
 
                 Cfg.data["catalog"] = new_dir
                 Cfg.data["first"] = False
-                with open(Cfg.cfg_json_dir, "w", encoding="utf=8") as file:
+                with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
                     json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
             self.migrate_thread = MigrateCatalog(old_dir, new_dir)
@@ -162,7 +162,7 @@ class SearchApp(QWidget):
             Cfg.data["catalog"] = new_dir
             self.browse_lbl.setText(new_dir)
 
-            with open(Cfg.cfg_json_dir, "w", encoding="utf=8") as file:
+            with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
                 json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
             self.migrate_thread = MigrateCatalog(old_dir, new_dir)

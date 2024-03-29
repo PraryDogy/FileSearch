@@ -27,7 +27,7 @@ templates = {
 
 def search_file(article: str):
 
-    with open(Cfg.catalog_json_dir, "r", encoding='utf-8') as json_file:
+    with open(Cfg.catalog_json_file, "r", encoding='utf-8') as json_file:
         data: dict = json.loads(json_file.read())
 
     try:

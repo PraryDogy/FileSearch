@@ -31,7 +31,7 @@ class Scaner(QThread):
                 filename = os.path.split(src)[-1].split(".")[0]
                 data[filename].append(src)
 
-        with open(Cfg.catalog_json_dir, "w", encoding='utf-8') as json_file:
+        with open(Cfg.catalog_json_file, "w", encoding='utf-8') as json_file:
             json.dump(data, json_file, ensure_ascii=False, indent=2)
 
         self.finished.emit()
