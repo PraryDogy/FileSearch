@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QVBoxLayout,
-                             QWidget)
+                             QWidget, QProgressBar)
 
 from catalog_mirgrate import CatalogMigrateThread
 from catalog_search import catalog_search_file
@@ -32,32 +32,51 @@ class SearchApp(QWidget):
         after.setSingleShot(True)
         after.timeout.connect(self.error_check)
         after.start(300)
+        self.adjustSize()
 
     def init_ui(self):
         self.v_layout = QVBoxLayout()
 
-        self.h_layout = QHBoxLayout()
-        self.v_layout.addLayout(self.h_layout)
+        # 1 row
+
+        self.h_layout_browse = QHBoxLayout()
+        self.h_layout_browse.setContentsMargins(0, 0, 0, 0)
+        self.v_layout.addLayout(self.h_layout_browse)
 
         self.browse_btn = QPushButton("Обзор", self)
         self.browse_btn.clicked.connect(self.choose_catalog)
-        self.h_layout.addWidget(self.browse_btn)
+        self.h_layout_browse.addWidget(self.browse_btn)
 
         self.browse_lbl = QLabel(Cfg.images_dir)
-        self.h_layout.addWidget(self.browse_lbl)
+        self.h_layout_browse.addWidget(self.browse_lbl)
 
-        self.update_btn = QPushButton("Обновить базу данных", self)
+        self.h_layout_browse.addStretch()
+
+        # 2 row
+
+        self.h_layout_update = QHBoxLayout()
+        self.h_layout_update.setContentsMargins(0, 0, 0, 0)
+        self.v_layout.addLayout(self.h_layout_update)
+
+        self.update_btn = QPushButton("Обновить каталог")
         self.update_btn.clicked.connect(self.update_btn_cmd)
-        
-        self.input_text = QLineEdit(self)
+        self.h_layout_update.addWidget(self.update_btn)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.h_layout_update.addWidget(self.progress_bar)
+
+        self.input_text = QLineEdit()
         self.input_text.setPlaceholderText("Вставьте артикул или ссылку")
         
-        self.search_button = QPushButton("Поиск", self)
+        self.search_button = QPushButton("Поиск")
         self.search_button.clicked.connect(partial(self.btn_search_cmd))
         
-        self.v_layout.addWidget(self.update_btn)
         self.v_layout.addWidget(self.input_text)
         self.v_layout.addWidget(self.search_button)
+
+        self.v_layout.addStretch()
         
         self.setLayout(self.v_layout)
 
@@ -154,7 +173,8 @@ class SearchApp(QWidget):
         window_geometry = self.frameGeometry()
         window_geometry.moveCenter(screen_geometry.center())
         self.move(window_geometry.topLeft())
-        
+    
+
 
 if __name__ == "__main__":
     Cfg.check_files()
