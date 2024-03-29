@@ -65,7 +65,6 @@ class SearchApp(QWidget):
         if Cfg.first_load:
             self.gui_switch(setDisabled=True)
             self.warning(
-                "Приложение обновлено\n"
                 "Нажмите кнопку \"Обзор\" и укажите каталог изображений"
                 )
 
