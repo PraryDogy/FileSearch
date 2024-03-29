@@ -60,7 +60,6 @@ class SearchApp(QWidget):
 
     def catalog_check(self):
         if Cfg.data["first"]:
-            self.setDisabled(True)
             new_dir = QFileDialog.getExistingDirectory(self)
 
             if new_dir:
@@ -72,7 +71,8 @@ class SearchApp(QWidget):
                     json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
             self.migrate_thread = MigrateCatalog(old_dir, new_dir)
-            self.migrate_thread.finished.connect(self.finalize_update_db)
+            self.migrate_thread.finished.connect(self.finalize_migrate)
+            self.setDisabled(True)
             self.migrate_thread.start()
 
     def update_db(self):
@@ -161,7 +161,7 @@ class SearchApp(QWidget):
                 json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
             self.migrate_thread = MigrateCatalog(old_dir, new_dir)
-            self.migrate_thread.finished.connect(self.finalize_update_db)
+            self.migrate_thread.finished.connect(self.finalize_migrate)
             self.setDisabled(True)
             self.migrate_thread.start()
 
