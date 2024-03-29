@@ -64,10 +64,10 @@ class SearchApp(QWidget):
     def error_check(self):
         if Cfg.first_load:
             self.gui_switch(setDisabled=True)
-            self.warning((
+            self.warning(
                 "Приложение обновлено\n"
                 "Нажмите кнопку \"Обзор\" и укажите каталог изображений"
-                ))
+                )
 
     def choose_catalog(self):
         new_dir = QFileDialog.getExistingDirectory(self)
