@@ -5,7 +5,7 @@ from cfg import Cfg
 from PyQt6.QtCore import QThread, pyqtSignal
 
 
-class Scaner(QThread):
+class UpdateCatalogThread(QThread):
     finished = pyqtSignal()
 
     def __init__(self):

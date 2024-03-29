@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (QApplication, QFileDialog, QLineEdit, QMessageBox,
 from cfg import Cfg
 from migrate_catalog import MigrateCatalog
 from reveal_files import RevealFiles
-from scaner import Scaner
+from update_catalog import UpdateCatalogThread
 from search_file import search_file
 
 
@@ -82,7 +82,7 @@ class SearchApp(QWidget):
 
     def update_db(self):
         self.update_btn.setText("Подождите...")
-        self.t1 = Scaner()
+        self.t1 = UpdateCatalogThread()
         self.t1.finished.connect(self.finalize_update_db)
         self.t1.start()
 
