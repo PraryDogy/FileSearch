@@ -108,6 +108,9 @@ class SearchApp(QWidget):
 
         if "miuz.ru" in text:
             text = text.strip("/").split("/")[-1]
+        
+        if not text or len(text) < 5:
+            return
 
         res: dict = search_file(text)
 
