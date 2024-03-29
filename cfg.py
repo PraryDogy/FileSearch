@@ -5,7 +5,7 @@ import shutil
 class Cfg:
     app_name = "MiuzCatSearch"
 
-    app_ver: int = "1.0.3"
+    app_ver: int = "1.0.5"
     images_dir: str = "/Volumes/Shares-1/Studio/Photo/Catalog"
     first_load: bool = True
 
