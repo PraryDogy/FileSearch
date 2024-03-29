@@ -36,23 +36,21 @@ class Cfg:
             shutil.copy2("catalog.json", Cfg.catalog_json_file)
 
         if not os.path.exists(Cfg.cfg_json_file):
-            Cfg.write_cfg_json_file(Cfg.get_default_settings())
+            Cfg.write_cfg_json_file()
 
         data = Cfg.read_cfg_json_file()
 
         if data(type) != dict:
-            Cfg.write_cfg_json_file(Cfg.get_default_settings())
+            Cfg.write_cfg_json_file()
             data = Cfg.read_cfg_json_file()
 
         if "app_ver" not in data or data["app_ver"] != Cfg.app_ver:
-            data["app_ver"] = Cfg.app_ver
-            data["first_load"] = Cfg.first_load # True
-            data["images_dir"] = Cfg.images_dir
-            Cfg.write_cfg_json_file(data)
+            Cfg.write_cfg_json_file()
 
         else:
             Cfg.first_load = data["first_load"]
             Cfg.images_dir = data["images_dir"]
+            Cfg.write_cfg_json_file()
 
 
     @staticmethod
@@ -65,7 +63,13 @@ class Cfg:
             return []
 
     @staticmethod
-    def write_cfg_json_file(new_data: dict):
+    def write_cfg_json_file():
+        new_data = {
+            "app_ver": Cfg.app_ver,
+            "images_dir": Cfg.images_dir,
+            "first_load": Cfg.first_load
+            }
+
         with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
             json.dump(new_data, file, ensure_ascii=False, indent=2)
 

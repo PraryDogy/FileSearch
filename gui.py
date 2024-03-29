@@ -18,11 +18,18 @@ from catalog_search import catalog_search_file
 
 class SearchApp(QWidget):
     def __init__(self):
-        Cfg
         super().__init__()
         self.setWindowTitle(Cfg.app_name)
-        self.setGeometry(100, 100, 300, 150)
-        
+        self.btns = []
+
+        # self.setGeometry(100, 100, 300, 150)
+
+        self.init_ui()
+        self.setFocus()
+        self.center()
+        self.catalog_check()
+
+    def init_ui(self):
         self.v_layout = QVBoxLayout()
 
         self.h_layout = QHBoxLayout()
@@ -32,7 +39,7 @@ class SearchApp(QWidget):
         self.browse_btn.clicked.connect(self.choose_catalog)
         self.h_layout.addWidget(self.browse_btn)
 
-        self.browse_lbl = QLabel(Cfg.data["catalog"])
+        self.browse_lbl = QLabel(Cfg.images_dir)
         self.h_layout.addWidget(self.browse_lbl)
 
         self.update_btn = QPushButton("Обновить базу данных", self)
@@ -41,37 +48,30 @@ class SearchApp(QWidget):
         self.input_text = QLineEdit(self)
         self.input_text.setPlaceholderText("Вставьте артикул или ссылку")
         
-        
         self.search_button = QPushButton("Поиск", self)
         self.search_button.clicked.connect(partial(self.btn_search_cmd))
-        # self.search_button.mouseReleaseEvent = lambda e: self.search()
         
         self.v_layout.addWidget(self.update_btn)
         self.v_layout.addWidget(self.input_text)
         self.v_layout.addWidget(self.search_button)
         
         self.setLayout(self.v_layout)
-        self.setFocus()
 
-        self.btns = []
-        self.center()
-
-        self.catalog_check()
 
     def catalog_check(self):
-        try:
-            os.listdir(Cfg.data["catalog"])
-        except Exception as e:
-            print(f"gui.pu > catalog check > listdir > {e}")
+        if Cfg.first_load:
 
-        if Cfg.data["first"]:
             new_dir = QFileDialog.getExistingDirectory(self)
 
             if new_dir:
-                old_dir = Cfg.data["catalog"]
 
-                Cfg.data["catalog"] = new_dir
-                Cfg.data["first"] = False
+                old_dir = Cfg.images_dir
+
+                Cfg.images_dir = new_dir
+                Cfg.first_load = False
+
+                Cfg.write_cfg_json_file()
+
                 with open(Cfg.cfg_json_file, "w", encoding="utf=8") as file:
                     json.dump(Cfg.data, file, ensure_ascii=False, indent=2)
 
