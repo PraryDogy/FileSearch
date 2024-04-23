@@ -16,6 +16,38 @@ from cfg import Cfg
 from reveal_files import RevealFiles
 
 
+class Warning(QWidget):
+    def __init__(self, parent: QWidget):
+        super().__init__()
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+
+        self.setFixedSize(320, 90)
+        self.setWindowTitle("Каталог недоступен")
+
+        self.init_ui()
+
+        main_window_pos = parent.pos()
+        main_window_rect = parent.geometry()
+        center_x = main_window_pos.x() + main_window_rect.width() // 2
+        center_y = main_window_pos.y() + main_window_rect.height() // 2
+        self.move(center_x - self.width() // 2, center_y - self.height() // 2)
+
+    def init_ui(self):
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(15, 5, 15, 0)
+        main_layout.setSpacing(0)
+        self.setLayout(main_layout)
+
+        lbl = QLabel("Каталог недоступен.\nНажмите кнопку \"Обзор\" и укажите каталог")
+        main_layout.addWidget(lbl)
+
+        btn = QPushButton("Понятно", self)
+        btn.setFixedWidth(100)
+        btn.clicked.connect(self.deleteLater)
+        main_layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+
+
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -82,10 +114,7 @@ class SearchApp(QWidget):
 
     def error_check(self):
         if Cfg.first_load:
-            self.gui_switch(setDisabled=True)
-            self.warning(
-                "Нажмите кнопку \"Обзор\" и укажите каталог изображений"
-                )
+            self.warning()
 
     def choose_catalog(self):
         new_dir = QFileDialog.getExistingDirectory(self)
@@ -128,15 +157,14 @@ class SearchApp(QWidget):
     def finalize_update_btn_cmd(self):
         self.update_btn.setText("Обновить базу данных")
     
-    def warning(self, text):
-        message_box = QMessageBox()
-        message_box.setIcon(QMessageBox.Icon.Information)
-        message_box.setText(text)
-        message_box.exec()
+    def warning(self):
+        self.gui_switch(setDisabled=True)
+        self.win = Warning(self)
+        self.win.show()
 
     def btn_search_cmd(self):
         if not os.path.exists(Cfg.images_dir):
-            self.warning("Сетевой диск не подключен")
+            self.warning()
             return
 
         self.remove_article_btns()
@@ -163,11 +191,7 @@ class SearchApp(QWidget):
         if os.path.exists(path):
             subprocess.run(["open", "-R", path])
         else:
-            self.warning(
-                "Сетевой диск не подключен\n"
-                "или неверно указан каталог")
-
-        # RevealFiles(files_list=[path])
+            self.warning()
 
     def center(self):
         screens = QGuiApplication.screens()
