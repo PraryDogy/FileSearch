@@ -107,8 +107,6 @@ class SearchApp(QWidget):
         
         self.v_layout.addWidget(self.input_text)
         self.v_layout.addWidget(self.search_button)
-
-        # self.v_layout.addStretch()
         
         self.setLayout(self.v_layout)
 
@@ -171,11 +169,11 @@ class SearchApp(QWidget):
         self.setFocus()
         text: str = self.input_text.text()
         
-        if not text or len(text) < 5:
-            return
-
         if "miuz.ru" in text:
             text = text.strip("/").split("/")[-1]
+
+        if not text or len(text) < 5:
+            return
 
         res: dict = catalog_search_file(text)
 
@@ -186,6 +184,12 @@ class SearchApp(QWidget):
                 btn.setStyleSheet("text-align:left")
                 self.v_layout.addWidget(btn)
                 self.btns.append(btn)
+
+        elif not res:
+            lbl = QLabel ("Не найдено")
+            lbl.setFixedSize(30, 30)
+            self.v_layout.addWidget(lbl)
+            self.btns.append(lbl)
 
     def article_btn_cmd(self, path: str):
         if os.path.exists(path):
