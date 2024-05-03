@@ -54,8 +54,7 @@ class SearchApp(QWidget):
         self.setWindowTitle(Cfg.app_name)
         self.btns = []
 
-        self.resize(350, 215)
-
+        # self.setMinimumSize(290, 200)
         self.init_ui()
         self.setFocus()
         self.center()
@@ -64,9 +63,9 @@ class SearchApp(QWidget):
         after.setSingleShot(True)
         after.timeout.connect(self.error_check)
         after.start(300)
-        self.adjustSize()
 
     def init_ui(self):
+
         self.v_layout = QVBoxLayout()
 
         # 1 row
@@ -118,14 +117,14 @@ class SearchApp(QWidget):
         new_dir = QFileDialog.getExistingDirectory(self)
 
         if new_dir:
-                old_dir = Cfg.images_dir
-                Cfg.images_dir = new_dir
-                Cfg.first_load = False
-                Cfg.write_cfg_json_file()
+            old_dir = Cfg.images_dir
+            Cfg.images_dir = new_dir
+            Cfg.first_load = False
+            Cfg.write_cfg_json_file()
 
-                self.migrate_thread = CatalogMigrateThread(old_dir, new_dir)
-                self.migrate_thread.finished.connect(self.finalize_choose_catalog)
-                self.migrate_thread.start()
+            self.migrate_thread = CatalogMigrateThread(old_dir, new_dir)
+            self.migrate_thread.finished.connect(self.finalize_choose_catalog)
+            self.migrate_thread.start()
 
     def finalize_choose_catalog(self):
         self.gui_switch(setDisabled=False)
@@ -160,7 +159,7 @@ class SearchApp(QWidget):
         self.win = Warning(self)
         self.win.show()
 
-    def btn_search_cmd(self):
+    def btn_search_cmd(self):    
         if not os.path.exists(Cfg.images_dir):
             self.warning()
             return
@@ -182,14 +181,17 @@ class SearchApp(QWidget):
                 btn = QPushButton(name, self)
                 btn.clicked.connect(partial(self.article_btn_cmd, src))
                 btn.setStyleSheet("text-align:left")
+                btn.adjustSize()
                 self.v_layout.addWidget(btn)
                 self.btns.append(btn)
 
         elif not res:
             lbl = QLabel ("Не найдено")
-            lbl.setFixedSize(30, 30)
             self.v_layout.addWidget(lbl)
             self.btns.append(lbl)
+
+        self.adjustSize()
+        self.resize(self.minimumSizeHint())
 
     def article_btn_cmd(self, path: str):
         if os.path.exists(path):
