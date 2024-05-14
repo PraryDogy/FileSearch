@@ -52,9 +52,8 @@ class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(Cfg.app_name)
-        self.btns = []
-
-        # self.setMinimumSize(290, 200)
+        self.base_w, self.base_h = 290, 210
+        self.setFixedSize(self.base_w, self.base_h)
         self.init_ui()
         self.setFocus()
         self.center()
@@ -109,6 +108,12 @@ class SearchApp(QWidget):
         
         self.setLayout(self.v_layout)
 
+        self.btns_wid = QWidget()
+        self.v_layout.addWidget(self.btns_wid)
+        self.btns_layout = QVBoxLayout()
+        self.btns_layout.setContentsMargins(0, 0, 0, 0)
+        self.btns_wid.setLayout(self.btns_layout)
+
     def error_check(self):
         if Cfg.first_load:
             self.warning()
@@ -137,13 +142,8 @@ class SearchApp(QWidget):
             i.setDisabled(setDisabled)
 
     def remove_article_btns(self):
-        for i in self.btns:
-            try:
-                i: QPushButton
-                i.deleteLater()
-            except Exception:
-                pass
-        self.btns.clear()
+        for i in reversed(range(self.btns_layout.count())): 
+            self.btns_layout.itemAt(i).widget().deleteLater()
 
     def update_btn_cmd(self):
         self.update_btn.setText("Подождите...")
@@ -159,12 +159,14 @@ class SearchApp(QWidget):
         self.win = Warning(self)
         self.win.show()
 
-    def btn_search_cmd(self):    
+    def btn_search_cmd(self):
         if not os.path.exists(Cfg.images_dir):
             self.warning()
             return
 
         self.remove_article_btns()
+        self.setFixedSize(self.base_w, self.base_h)
+
         self.setFocus()
         text: str = self.input_text.text()
         
@@ -177,21 +179,22 @@ class SearchApp(QWidget):
         res: dict = catalog_search_file(text)
 
         if res:
+            advanved_size = 0
             for name, src in res:
                 btn = QPushButton(name, self)
                 btn.clicked.connect(partial(self.article_btn_cmd, src))
                 btn.setStyleSheet("text-align:left")
-                btn.adjustSize()
-                self.v_layout.addWidget(btn)
-                self.btns.append(btn)
+                self.btns_layout.addWidget(btn)
+                advanved_size += btn.height() + 10
+
+            self.setFixedSize(self.base_w, self.base_h + advanved_size)
 
         elif not res:
             lbl = QLabel ("Не найдено")
-            self.v_layout.addWidget(lbl)
-            self.btns.append(lbl)
+            self.btns_layout.addWidget(lbl)
 
-        self.adjustSize()
-        self.resize(self.minimumSizeHint())
+            self.setFixedSize(self.base_w, self.base_h + 20)
+
 
     def article_btn_cmd(self, path: str):
         if os.path.exists(path):
