@@ -6,14 +6,13 @@ from functools import partial
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QGuiApplication, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
-                             QLineEdit, QMessageBox, QPushButton, QVBoxLayout,
-                             QWidget, QProgressBar)
+                             QLineEdit, QPushButton, QSpacerItem, QVBoxLayout,
+                             QWidget)
 
 from catalog_mirgrate import CatalogMigrateThread
 from catalog_search import catalog_search_file
 from catalog_update import CatalogUpdateThread
 from cfg import Cfg
-from reveal_files import RevealFiles
 
 
 class Warning(QWidget):
@@ -51,6 +50,7 @@ class Warning(QWidget):
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle(Cfg.app_name)
         self.base_w, self.base_h = 290, 210
         self.setFixedSize(self.base_w, self.base_h)
@@ -64,52 +64,68 @@ class SearchApp(QWidget):
         after.start(300)
 
     def init_ui(self):
+        self.base_layout = QVBoxLayout()
+        self.base_layout.setContentsMargins(0, 0, 0, 0)
+        self.base_layout.setSpacing(0)
+        self.setLayout(self.base_layout)
 
-        self.v_layout = QVBoxLayout()
+        self.fixed_widget = QWidget()
+        self.fixed_widget.setFixedSize(self.base_w - 10, self.base_h)
+        self.base_layout.addWidget(self.fixed_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # 1 row
+        self.fixed_layout = QVBoxLayout()
+        self.fixed_layout.setContentsMargins(0, 0, 0, 0)
+        self.fixed_layout.setSpacing(0)
+        self.fixed_widget.setLayout(self.fixed_layout)
 
-        self.h_layout_browse = QHBoxLayout()
-        self.h_layout_browse.setContentsMargins(0, 0, 0, 0)
-        self.v_layout.addLayout(self.h_layout_browse)
+        # BROWSE CATALOG PATH
+        self.browse_cat_layout = QHBoxLayout()
+        self.browse_cat_layout.setContentsMargins(0, 0, 0, 0)
+        self.browse_cat_layout.setSpacing(0)
+        self.fixed_layout.addLayout(self.browse_cat_layout)
 
         self.browse_btn = QPushButton("Обзор", self)
+        self.browse_btn.setFixedWidth(70)
         self.browse_btn.clicked.connect(self.choose_catalog)
-        self.h_layout_browse.addWidget(self.browse_btn)
+        self.browse_cat_layout.addWidget(self.browse_btn)
+
+        self.browse_cat_layout.addSpacerItem(QSpacerItem(10, 0))
 
         self.browse_lbl = QLabel(Cfg.images_dir)
         self.browse_lbl.setWordWrap(True)
         self.set_browse_lbl_h()
-        self.h_layout_browse.addWidget(self.browse_lbl)
+        self.browse_cat_layout.addWidget(self.browse_lbl)
 
-        # 2 row
-
-        self.h_layout_update = QHBoxLayout()
-        self.h_layout_update.setContentsMargins(0, 0, 0, 0)
-        self.v_layout.addLayout(self.h_layout_update)
-
+        # UPDATE CATALOG JSON
         self.update_btn = QPushButton("Обновить каталог")
         self.update_btn.clicked.connect(self.update_btn_cmd)
-        self.h_layout_update.addWidget(self.update_btn)
+        self.update_btn.setFixedWidth(150)
+        self.fixed_layout.addWidget(self.update_btn)
 
+        # SEARCH INPUT
         self.input_text = QLineEdit()
         self.input_text.setFixedHeight(30)
         self.input_text.setStyleSheet(
             f"""
             padding-left: 5px;
+            border-radius: 5px;
             """)
         self.input_text.setPlaceholderText("Вставьте артикул или ссылку")
         self.input_text.mouseReleaseEvent = self.select_all_text
-        
+        self.fixed_layout.addWidget(self.input_text)
+
+        # SEARCH BUTTON
         self.search_button = QPushButton("Поиск")
         self.search_button.clicked.connect(partial(self.btn_search_cmd))
+        self.fixed_layout.addWidget(self.search_button)
         
-        self.v_layout.addWidget(self.input_text)
-        self.v_layout.addWidget(self.search_button)
-        
-        self.setLayout(self.v_layout)
+        self.btns_widget = QWidget()
+        self.base_layout.addWidget(self.btns_widget)
 
-        self.btns = []
+        self.btns_layout = QVBoxLayout()
+        self.btns_widget.setLayout(self.btns_layout)
+
+        self.base_layout.addStretch()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
@@ -117,7 +133,8 @@ class SearchApp(QWidget):
         return super().keyPressEvent(a0)
 
     def select_all_text(self, e):
-        self.input_text.selectAll()
+        if not self.input_text.hasFocus():
+            self.input_text.selectAll()
 
     def error_check(self):
         if Cfg.first_load:
@@ -147,9 +164,8 @@ class SearchApp(QWidget):
             i.setDisabled(setDisabled)
 
     def remove_article_btns(self):
-        for i in self.btns:
-            i.deleteLater()
-        self.btns.clear()
+        for i in reversed(range(self.btns_layout.count())):
+            self.btns_layout.itemAt(i).widget().close()
 
     def update_btn_cmd(self):
         self.update_btn.setText("Подождите...")
@@ -171,8 +187,6 @@ class SearchApp(QWidget):
             return
 
         self.remove_article_btns()
-        self.setFixedSize(self.base_w, self.base_h)
-
         self.setFocus()
         text: str = self.input_text.text()
         
@@ -181,8 +195,7 @@ class SearchApp(QWidget):
 
         if not text or len(text) < 5:
             lbl = QLabel ("Не найдено")
-            self.btns.append(lbl)
-            self.v_layout.addWidget(lbl)
+            self.btns_layout.addWidget(lbl)
             self.setFixedSize(self.base_w, self.base_h + 20)
             return
 
@@ -194,16 +207,15 @@ class SearchApp(QWidget):
                 btn = QPushButton(name, self)
                 btn.clicked.connect(partial(self.article_btn_cmd, src))
                 btn.setStyleSheet("text-align:left")
-                self.v_layout.addWidget(btn)
+                self.btns_layout.addWidget(btn)
                 advanved_size += btn.height() + 20
-                self.btns.append(btn)
 
+            
             self.setFixedSize(self.base_w, self.base_h + advanved_size)
 
         elif not res:
             lbl = QLabel ("Не найдено")
-            self.btns.append(lbl)
-            self.v_layout.addWidget(lbl)
+            self.btns_layout.addWidget(lbl)
             self.setFixedSize(self.base_w, self.base_h + 20)
 
 
