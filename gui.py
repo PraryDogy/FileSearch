@@ -4,7 +4,7 @@ import sys
 from functools import partial
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QGuiApplication, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QVBoxLayout,
                              QWidget, QProgressBar)
@@ -99,6 +99,7 @@ class SearchApp(QWidget):
             padding-left: 5px;
             """)
         self.input_text.setPlaceholderText("Вставьте артикул или ссылку")
+        self.input_text.mouseReleaseEvent = self.select_all_text
         
         self.search_button = QPushButton("Поиск")
         self.search_button.clicked.connect(partial(self.btn_search_cmd))
@@ -109,6 +110,14 @@ class SearchApp(QWidget):
         self.setLayout(self.v_layout)
 
         self.btns = []
+
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+        if a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
+            self.btn_search_cmd()
+        return super().keyPressEvent(a0)
+
+    def select_all_text(self, e):
+        self.input_text.selectAll()
 
     def error_check(self):
         if Cfg.first_load:
@@ -182,13 +191,14 @@ class SearchApp(QWidget):
                 btn.clicked.connect(partial(self.article_btn_cmd, src))
                 btn.setStyleSheet("text-align:left")
                 self.v_layout.addWidget(btn)
-                advanved_size += btn.height() + 10
+                advanved_size += btn.height() + 20
                 self.btns.append(btn)
 
             self.setFixedSize(self.base_w, self.base_h + advanved_size)
 
         elif not res:
             lbl = QLabel ("Не найдено")
+            self.btns.append(lbl)
             self.v_layout.addWidget(lbl)
 
             self.setFixedSize(self.base_w, self.base_h + 20)
