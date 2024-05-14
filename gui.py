@@ -108,11 +108,7 @@ class SearchApp(QWidget):
         
         self.setLayout(self.v_layout)
 
-        self.btns_wid = QWidget()
-        self.v_layout.addWidget(self.btns_wid)
-        self.btns_layout = QVBoxLayout()
-        self.btns_layout.setContentsMargins(0, 0, 0, 0)
-        self.btns_wid.setLayout(self.btns_layout)
+        self.btns = []
 
     def error_check(self):
         if Cfg.first_load:
@@ -142,8 +138,9 @@ class SearchApp(QWidget):
             i.setDisabled(setDisabled)
 
     def remove_article_btns(self):
-        for i in reversed(range(self.btns_layout.count())): 
-            self.btns_layout.itemAt(i).widget().deleteLater()
+        for i in self.btns:
+            i.deleteLater()
+        self.btns.clear()
 
     def update_btn_cmd(self):
         self.update_btn.setText("Подождите...")
@@ -184,14 +181,15 @@ class SearchApp(QWidget):
                 btn = QPushButton(name, self)
                 btn.clicked.connect(partial(self.article_btn_cmd, src))
                 btn.setStyleSheet("text-align:left")
-                self.btns_layout.addWidget(btn)
+                self.v_layout.addWidget(btn)
                 advanved_size += btn.height() + 10
+                self.btns.append(btn)
 
             self.setFixedSize(self.base_w, self.base_h + advanved_size)
 
         elif not res:
             lbl = QLabel ("Не найдено")
-            self.btns_layout.addWidget(lbl)
+            self.v_layout.addWidget(lbl)
 
             self.setFixedSize(self.base_w, self.base_h + 20)
 
