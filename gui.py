@@ -180,6 +180,10 @@ class SearchApp(QWidget):
             text = text.strip("/").split("/")[-1]
 
         if not text or len(text) < 5:
+            lbl = QLabel ("Не найдено")
+            self.btns.append(lbl)
+            self.v_layout.addWidget(lbl)
+            self.setFixedSize(self.base_w, self.base_h + 20)
             return
 
         res: dict = catalog_search_file(text)
@@ -200,7 +204,6 @@ class SearchApp(QWidget):
             lbl = QLabel ("Не найдено")
             self.btns.append(lbl)
             self.v_layout.addWidget(lbl)
-
             self.setFixedSize(self.base_w, self.base_h + 20)
 
 
