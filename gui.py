@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QDragEnterEvent, QDragLeaveEvent, QDropEvent, QGuiApplication, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QPushButton, QSpacerItem, QVBoxLayout,
-                             QWidget, QScrollArea)
+                             QWidget, QScrollArea, QSizePolicy)
 
 from catalog_mirgrate import CatalogMigrateThread
 from catalog_search import catalog_search_file
@@ -72,7 +72,7 @@ class DraggableLabel(QLabel):
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.path = None
+        self.path = "/Users/Loshkarev/Downloads"
         self.search_thread: SearchThread = None
 
         self.setWindowTitle(Cfg.app_name)
@@ -84,10 +84,18 @@ class SearchApp(QWidget):
         self.center()
 
     def init_ui(self):
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setFixedWidth(self.base_w)
+        self.scroll_area.setWidgetResizable(True)
+        # self.scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.base_widget = QWidget()
+        self.scroll_area.setWidget(self.base_widget)
+
         self.base_layout = QVBoxLayout()
         self.base_layout.setContentsMargins(0, 0, 0, 0)
         self.base_layout.setSpacing(0)
-        self.setLayout(self.base_layout)
+        self.base_widget.setLayout(self.base_layout)
 
         self.fixed_widget = QWidget()
         self.fixed_widget.setFixedSize(self.base_w - 10, self.base_h)
@@ -130,7 +138,6 @@ class SearchApp(QWidget):
         self.btns_layout = QVBoxLayout()
         self.btns_widget.setLayout(self.btns_layout)
 
-        # self.base_layout.addStretch()
     
     def set_path(self, path: str):
         self.path = path
@@ -184,7 +191,10 @@ class SearchApp(QWidget):
         self.btns_layout.addWidget(btn)
 
         self.temp_h += 35
-        self.setFixedSize(self.base_w, self.temp_h)
+
+        if self.temp_h < 600:
+            self.setFixedSize(self.base_w, self.temp_h)
+            self.scroll_area.resize(self.base_w, self.temp_h)
 
     def article_btn_cmd(self, path: str):
         if os.path.exists(path):
