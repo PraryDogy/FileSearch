@@ -8,10 +8,11 @@ class Test(QWidget):
 
         self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
+        self.default_text = " " * 12 + "Тест"
 
-        self.test_btn = QPushButton("Тест")
+        self.test_btn = QPushButton(self.default_text)
         self.test_btn.setFixedWidth(140)
-        self.test_btn.setStyleSheet("text-align: center;")
+        self.test_btn.setStyleSheet("text-align: left;")
         self.test_btn.clicked.connect(self.start_timer)
         self.v_layout.addWidget(self.test_btn)
 
@@ -22,9 +23,9 @@ class Test(QWidget):
 
     def change_text(self):
         if self.test_btn.text().count(".") == 3:
-            self.test_btn.setText("Тест")
+            self.test_btn.setText(self.default_text)
         else:
-            self.test_btn.setText(" " + self.test_btn.text() + ".")
+            self.test_btn.setText(self.test_btn.text() + ".")
 
         self.count += 1
         # if self.count == 16:
