@@ -22,6 +22,7 @@ APP = ["gui.py"]
 DATA_FILES = [
     "catalog.json",
     "reveal_files.scpt",
+    "get_path.scpt"
     ]
 
 OPTIONS = {"iconfile": "icon/icon.icns",

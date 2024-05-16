@@ -65,6 +65,22 @@ class DraggableLabel(QLabel):
         return super().dropEvent(a0)
 
 
+class GetPath(QLabel):
+    def __init__(self):
+        super().__init__()
+        self.setText("Откройте папку, в которой хотите искать")
+        self.setWordWrap(True)
+
+    def get_path(self):
+        result = subprocess.run(
+            ["osascript", "get_path.scpt"],
+            capture_output=True,
+            text=True
+            )
+        self.setText("Откройте папку, в которой хотите искать" + "\n" + "Текущий путь:" + "\n" + result.stdout.strip())
+        return result.stdout.strip()
+
+
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -108,10 +124,9 @@ class SearchApp(QWidget):
         # DRAGABLE EVENT
 
         self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
-        self.dragable = DraggableLabel()
-        self.dragable.setFixedSize(self.base_w - 20, 100)
-        self.dragable.path_selected.connect(self.set_path)
-        self.fixed_layout.addWidget(self.dragable, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.get_path_wid = GetPath()
+        self.get_path_wid.setFixedSize(self.base_w - 20, 100)
+        self.fixed_layout.addWidget(self.get_path_wid, alignment=Qt.AlignmentFlag.AlignCenter)
         self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
 
         # SEARCH INPUT
@@ -139,9 +154,6 @@ class SearchApp(QWidget):
 
         self.btns_count = 0
 
-    def set_path(self, path: str):
-        self.path = path
-
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
             self.btn_search_cmd()
@@ -158,6 +170,8 @@ class SearchApp(QWidget):
         self.temp_h = self.base_h
         self.remove_article_btns()
         self.setFocus()
+
+        self.path = self.get_path_wid.get_path()
 
         if self.search_thread and self.search_thread.isRunning():
             self.search_thread.stop_flag = True
