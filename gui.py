@@ -162,6 +162,7 @@ class SearchApp(QWidget):
     def remove_article_btns(self):
         self.btns_count = 0
         for i in reversed(range(self.btns_layout.count())):
+            self.btns_layout.itemAt(i).widget().hide()
             self.btns_layout.itemAt(i).widget().close()
         self.setFixedSize(self.base_w, self.base_h)
         self.scroll_area.resize(self.base_w, self.base_h)
