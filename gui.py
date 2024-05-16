@@ -128,7 +128,6 @@ class SearchApp(QWidget):
         self.search_button.clicked.connect(self.btn_search_cmd)
         self.fixed_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-
         self.fixed_layout.addStretch()
         
         self.btns_widget = QWidget()
@@ -140,7 +139,6 @@ class SearchApp(QWidget):
 
         self.btns_count = 0
 
-    
     def set_path(self, path: str):
         self.path = path
 
