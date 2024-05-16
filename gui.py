@@ -186,6 +186,17 @@ class SearchApp(QWidget):
 
     def finish_search(self):
         self.search_button.setText("Поиск")
+
+        abc = self.btns_layout.children()
+        for i in abc:
+            print(i)
+
+        lbl = QLabel ("Укажите место поиска")
+        self.btns_layout.addWidget(lbl)
+        self.setFixedSize(self.base_w, self.base_h + 50)
+        self.scroll_area.resize(self.base_w, self.base_h + 50)
+
+
     
     def add_article_btn(self, path):
         filename = os.path.basename(path)
