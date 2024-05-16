@@ -138,6 +138,8 @@ class SearchApp(QWidget):
         self.btns_layout.setContentsMargins(0, 0, 0, 0)
         self.btns_widget.setLayout(self.btns_layout)
 
+        self.btns_count = 0
+
     
     def set_path(self, path: str):
         self.path = path
@@ -148,6 +150,7 @@ class SearchApp(QWidget):
         return super().keyPressEvent(a0)
 
     def remove_article_btns(self):
+        self.btns_count = 0
         for i in reversed(range(self.btns_layout.count())):
             self.btns_layout.itemAt(i).widget().close()
         self.setFixedSize(self.base_w, self.base_h)
@@ -163,7 +166,7 @@ class SearchApp(QWidget):
 
         if not self.path or not os.path.exists(self.path):
             lbl = QLabel ("Укажите место поиска")
-            self.btns_layout.addWidget(lbl)
+            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
             self.setFixedSize(self.base_w, self.base_h + 50)
             self.scroll_area.resize(self.base_w, self.base_h + 50)
             return
@@ -172,8 +175,7 @@ class SearchApp(QWidget):
 
         if not text:
             lbl = QLabel ("Введите текст")
-            self.btns_layout.addWidget(lbl)
-            self.btns_layout.addWidget(lbl)
+            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
             self.setFixedSize(self.base_w, self.base_h + 50)
             self.scroll_area.resize(self.base_w, self.base_h + 50)
             return
@@ -187,17 +189,12 @@ class SearchApp(QWidget):
     def finish_search(self):
         self.search_button.setText("Поиск")
 
-        abc = self.btns_layout.children()
-        for i in abc:
-            print(i)
+        if self.btns_count == 0:
+            lbl = QLabel ("Не найдено")
+            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
+            self.setFixedSize(self.base_w, self.base_h + 50)
+            self.scroll_area.resize(self.base_w, self.base_h + 50)
 
-        lbl = QLabel ("Укажите место поиска")
-        self.btns_layout.addWidget(lbl)
-        self.setFixedSize(self.base_w, self.base_h + 50)
-        self.scroll_area.resize(self.base_w, self.base_h + 50)
-
-
-    
     def add_article_btn(self, path):
         filename = os.path.basename(path)
 
@@ -206,6 +203,7 @@ class SearchApp(QWidget):
         btn.setStyleSheet("text-align:left")
         btn.setFixedWidth(self.base_w - 20)
         self.btns_layout.addWidget(btn)
+        self.btns_count += 1
 
         self.temp_h += 35
 
