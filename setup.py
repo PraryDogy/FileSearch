@@ -20,7 +20,6 @@ current_year = datetime.now().year
 APP = ["gui.py"]
 
 DATA_FILES = [
-    "catalog.json",
     "reveal_files.scpt",
     "get_path.scpt"
     ]

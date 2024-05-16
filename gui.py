@@ -249,8 +249,8 @@ if __name__ == "__main__":
         plugin_path = os.path.join(
             "lib",
             f"python{py_ver}",
-            "PyQt6",
-            "Qt6",
+            "PyQt5",
+            "Qt5",
             "plugins",
             )
         os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
