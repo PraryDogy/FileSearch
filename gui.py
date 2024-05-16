@@ -3,15 +3,11 @@ import subprocess
 import sys
 from functools import partial
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
-from PyQt6.QtGui import QDragEnterEvent, QDragLeaveEvent, QDropEvent, QGuiApplication, QKeyEvent
-from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QSpacerItem, QVBoxLayout,
-                             QWidget, QScrollArea, QSizePolicy)
+from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QGuiApplication, QKeyEvent
+from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
+                             QScrollArea, QSpacerItem, QVBoxLayout, QWidget)
 
-from catalog_mirgrate import CatalogMigrateThread
-from catalog_search import catalog_search_file
-from catalog_update import CatalogUpdateThread
 from cfg import Cfg
 
 
@@ -87,7 +83,10 @@ class SearchApp(QWidget):
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setFixedWidth(self.base_w)
         self.scroll_area.setWidgetResizable(True)
-        # self.scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.scroll_area.setContentsMargins(0, 0, 0, 0)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.setObjectName("scroll")
+        self.scroll_area.setStyleSheet(f"#scroll {{border: 0px;}}")
 
         self.base_widget = QWidget()
         self.scroll_area.setWidget(self.base_widget)
@@ -110,14 +109,14 @@ class SearchApp(QWidget):
 
         self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
         self.dragable = DraggableLabel()
-        self.dragable.setFixedSize(self.base_w - 15, 100)
+        self.dragable.setFixedSize(self.base_w - 20, 100)
         self.dragable.path_selected.connect(self.set_path)
         self.fixed_layout.addWidget(self.dragable, alignment=Qt.AlignmentFlag.AlignCenter)
         self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
 
         # SEARCH INPUT
         self.input_text = QLineEdit()
-        self.input_text.setFixedSize(self.base_w - 10, 30)
+        self.input_text.setFixedSize(self.base_w - 20, 30)
         self.input_text.setStyleSheet("padding-left: 5px; border-radius: 5px;")
         self.input_text.setPlaceholderText("Вставьте имя файла")
         self.fixed_layout.addWidget(self.input_text)
@@ -136,6 +135,7 @@ class SearchApp(QWidget):
         self.base_layout.addWidget(self.btns_widget)
 
         self.btns_layout = QVBoxLayout()
+        self.btns_layout.setContentsMargins(0, 0, 0, 0)
         self.btns_widget.setLayout(self.btns_layout)
 
     
@@ -150,6 +150,8 @@ class SearchApp(QWidget):
     def remove_article_btns(self):
         for i in reversed(range(self.btns_layout.count())):
             self.btns_layout.itemAt(i).widget().close()
+        self.setFixedSize(self.base_w, self.base_h)
+        self.scroll_area.resize(self.base_w, self.base_h)
 
     def btn_search_cmd(self):
         self.temp_h = self.base_h
@@ -162,7 +164,8 @@ class SearchApp(QWidget):
         if not self.path or not os.path.exists(self.path):
             lbl = QLabel ("Укажите место поиска")
             self.btns_layout.addWidget(lbl)
-            self.setFixedSize(self.base_w, self.base_h + 20)
+            self.setFixedSize(self.base_w, self.base_h + 50)
+            self.scroll_area.resize(self.base_w, self.base_h + 50)
             return
 
         text: str = self.input_text.text()
@@ -170,7 +173,9 @@ class SearchApp(QWidget):
         if not text:
             lbl = QLabel ("Введите текст")
             self.btns_layout.addWidget(lbl)
-            self.setFixedSize(self.base_w, self.base_h + 20)
+            self.btns_layout.addWidget(lbl)
+            self.setFixedSize(self.base_w, self.base_h + 50)
+            self.scroll_area.resize(self.base_w, self.base_h + 50)
             return
         
         self.search_thread = SearchThread(self.path, text)
@@ -188,6 +193,7 @@ class SearchApp(QWidget):
         btn = QPushButton(filename, self)
         btn.clicked.connect(partial(self.article_btn_cmd, path))
         btn.setStyleSheet("text-align:left")
+        btn.setFixedWidth(self.base_w - 20)
         self.btns_layout.addWidget(btn)
 
         self.temp_h += 35
