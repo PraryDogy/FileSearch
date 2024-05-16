@@ -84,7 +84,7 @@ class GetPath(QLabel):
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.path = "/Users/Loshkarev/Downloads"
+        self.path = None
         self.search_thread: SearchThread = None
 
         self.setWindowTitle(Cfg.app_name)
