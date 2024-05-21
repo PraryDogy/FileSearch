@@ -168,6 +168,15 @@ class SearchApp(QWidget):
         self.scroll_area.resize(self.base_w, self.base_h)
 
     def btn_search_cmd(self):
+        try:
+            self.btn_search_cmd_actions()
+        except Exception:
+            lbl = QLabel ("Откройте папку, в которой хотите искать")
+            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
+            self.setFixedSize(self.base_w, self.base_h + 50)
+            self.scroll_area.resize(self.base_w, self.base_h + 50)
+
+    def btn_search_cmd_actions(self):
         self.temp_h = self.base_h
         self.remove_article_btns()
         self.setFocus()
