@@ -4,7 +4,7 @@ import sys
 from functools import partial
 
 from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QGuiApplication, QKeyEvent
+from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDropEvent, QGuiApplication, QKeyEvent
 from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
                              QScrollArea, QSpacerItem, QVBoxLayout, QWidget)
 
@@ -45,24 +45,37 @@ class DraggableLabel(QLabel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setText("Перетяните сюда папку для поиска")
+        self.base_text = "Перетяните сюда папку для поиска"
+        self.temp_path = None
+        self.setText(self.base_text)
         self.setAcceptDrops(True)
         self.setStyleSheet("border: 2px dashed gray; padding: 20px; border-radius: 5px;")
         self.setWordWrap(True)
 
     def dragEnterEvent(self, a0: QDragEnterEvent | None) -> None:
         if a0.mimeData().hasUrls():
+            self.setText(self.base_text)
+            self.setStyleSheet("border: 2px dashed gray; padding: 20px; border-radius: 5px;")
             a0.accept()
         else:
             a0.ignore()
         return super().dragEnterEvent(a0)
     
+    def dragLeaveEvent(self, a0: QDragLeaveEvent | None) -> None:
+        if self.temp_path:
+            self.setText(self.temp_path)
+            self.setStyleSheet("border: none;")
+
+        return super().dragLeaveEvent(a0)
+
     def dropEvent(self, a0: QDropEvent | None) -> None:
         path = a0.mimeData().urls()[0].toLocalFile()
-        self.setText(path)
-        self.path_selected.emit(path)
-        self.setStyleSheet("border: none;")
-        return super().dropEvent(a0)
+        if os.path.isdir(path):
+            self.setText(path)
+            self.path_selected.emit(path)
+            self.setStyleSheet("border: none;")
+            self.temp_path = path
+            return super().dropEvent(a0)
 
 
 class GetPath(QLabel):
@@ -124,9 +137,10 @@ class SearchApp(QWidget):
         # DRAGABLE EVENT
 
         self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
-        self.get_path_wid = GetPath()
+        self.get_path_wid = DraggableLabel()
         self.get_path_wid.setFixedSize(self.base_w - 20, 100)
-        self.fixed_layout.addWidget(self.get_path_wid, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.get_path_wid.path_selected.connect(self.get_path_wid_cmd)
+        self.fixed_layout.addWidget(self.get_path_wid)
         self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
 
         # SEARCH INPUT
@@ -154,6 +168,9 @@ class SearchApp(QWidget):
 
         self.btns_count = 0
 
+    def get_path_wid_cmd(self, value: str):
+        self.path = value
+
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
             self.btn_search_cmd()
@@ -171,17 +188,12 @@ class SearchApp(QWidget):
         try:
             self.btn_search_cmd_actions()
         except Exception:
-            lbl = QLabel ("Откройте папку, в которой хотите искать")
-            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-            self.setFixedSize(self.base_w, self.base_h + 50)
-            self.scroll_area.resize(self.base_w, self.base_h + 50)
+            pass
 
     def btn_search_cmd_actions(self):
         self.temp_h = self.base_h
         self.remove_article_btns()
         self.setFocus()
-
-        self.path = self.get_path_wid.get_path()
 
         if self.search_thread and self.search_thread.isRunning():
             self.search_thread.stop_flag = True
