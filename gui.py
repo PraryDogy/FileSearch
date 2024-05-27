@@ -14,6 +14,7 @@ from cfg import Cfg
 class SearchThread(QThread):
     result = pyqtSignal(str)
     finished = pyqtSignal()
+    stoped = pyqtSignal()
 
     def __init__(self, path: str, filename: str):
         super().__init__()
@@ -33,8 +34,8 @@ class SearchThread(QThread):
                 if name_a in name_b or name_a == name_b:
                     self.result.emit(os.path.join(root, file))
 
-                elif self.stop_flag:
-                    self.finished.emit()
+                if self.stop_flag:
+                    self.stoped.emit()
                     return
 
         self.finished.emit()
@@ -182,7 +183,7 @@ class SearchApp(QWidget):
             self.btns_layout.itemAt(i).widget().hide()
             self.btns_layout.itemAt(i).widget().close()
         self.setFixedSize(self.base_w, self.base_h)
-        self.scroll_area.resize(self.base_w, self.base_h)
+        # self.scroll_area.resize(self.base_w, self.base_h - 10)
 
     def btn_search_cmd(self):
         try:
@@ -217,8 +218,12 @@ class SearchApp(QWidget):
         self.search_thread = SearchThread(self.path, text)
         self.search_thread.result.connect(self.add_article_btn)
         self.search_thread.finished.connect(self.finish_search)
+        self.search_thread.stoped.connect(self.stoped_thread)
         self.search_button.setText("Ищу...")
         self.search_thread.start()
+
+    def stoped_thread(self):
+        pass
 
     def finish_search(self):
         self.search_button.setText("Поиск")
