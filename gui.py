@@ -219,6 +219,8 @@ class SearchApp(QWidget):
             self.setFixedSize(self.base_w, self.base_h + 50)
             self.scroll_area.resize(self.base_w, self.base_h + 50)
             return
+        else:
+            text = text.strip()
         
         self.search_thread = SearchThread(self.path, text)
         self.search_thread.result.connect(self.add_article_btn)
