@@ -3,8 +3,9 @@ import subprocess
 import sys
 from functools import partial
 
-from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtGui import QDragEnterEvent, QDragLeaveEvent, QDropEvent, QGuiApplication, QKeyEvent
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import (QDragEnterEvent, QDragLeaveEvent, QDropEvent,
+                         QGuiApplication, QKeyEvent)
 from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
                              QScrollArea, QSpacerItem, QVBoxLayout, QWidget)
 
@@ -77,22 +78,6 @@ class DraggableLabel(QLabel):
             self.setStyleSheet("border: none;")
             self.temp_path = path
             return super().dropEvent(a0)
-
-
-class GetPath(QLabel):
-    def __init__(self):
-        super().__init__()
-        self.setText("Откройте папку, в которой хотите искать")
-        self.setWordWrap(True)
-
-    def get_path(self):
-        result = subprocess.run(
-            ["osascript", "get_path.scpt"],
-            capture_output=True,
-            text=True
-            )
-        self.setText("Откройте папку, в которой хотите искать" + "\n" + "Текущий путь:" + "\n" + result.stdout.strip())
-        return result.stdout.strip()
 
 
 class SearchApp(QWidget):

@@ -20,8 +20,6 @@ current_year = datetime.now().year
 APP = ["gui.py"]
 
 DATA_FILES = [
-    "reveal_files.scpt",
-    "get_path.scpt"
     ]
 
 OPTIONS = {"iconfile": "icon/icon.icns",
