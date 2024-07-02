@@ -22,7 +22,7 @@ APP = ["gui.py"]
 DATA_FILES = [
     ]
 
-OPTIONS = {"iconfile": "icon/icon.icns",
+OPTIONS = {"iconfile": "icon/MiuzSearch.icns",
            "plist": {"CFBundleName": Cfg.app_name,
                      "CFBundleShortVersionString": Cfg.app_ver,
                      "CFBundleVersion": Cfg.app_ver,

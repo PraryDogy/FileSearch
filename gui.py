@@ -5,7 +5,7 @@ from functools import partial
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import (QDragEnterEvent, QDragLeaveEvent, QDropEvent,
-                         QGuiApplication, QKeyEvent)
+                         QGuiApplication, QKeyEvent, QIcon)
 from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
                              QScrollArea, QSpacerItem, QVBoxLayout, QWidget)
 
@@ -250,8 +250,6 @@ class SearchApp(QWidget):
 
     
 if __name__ == "__main__":
-    # Cfg.check_files()
-
     if os.path.exists("lib"): 
         #lib folder appears when we pack this project to .app with py2app
 
@@ -269,6 +267,9 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setStyle('macos')
+
+    if os.path.dirname(__file__) != "Resources":
+        app.setWindowIcon(QIcon("icon/MiuzSearch.icns"))
     
     window = SearchApp()
     window.show()
