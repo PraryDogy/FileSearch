@@ -5,9 +5,9 @@ from functools import partial
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import (QDragEnterEvent, QDragLeaveEvent, QDropEvent,
-                         QGuiApplication, QKeyEvent, QIcon)
+                         QGuiApplication, QKeyEvent, QIcon, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
-                             QScrollArea, QSpacerItem, QVBoxLayout, QWidget)
+                             QScrollArea, QSpacerItem, QVBoxLayout, QWidget, QFileDialog)
 
 from cfg import Cfg
 
@@ -78,6 +78,26 @@ class DraggableLabel(QLabel):
             self.setStyleSheet("border: none;")
             self.temp_path = path
             return super().dropEvent(a0)
+        
+    def mouseReleaseEvent(self, ev: QMouseEvent | None) -> None:
+        if ev.button() != Qt.MouseButton.LeftButton:
+            return
+
+        if not self.temp_path:
+            direc = os.path.join(os.path.expanduser("~"), "Downloads")
+        else:
+            direc = self.temp_path
+
+        dialog = QFileDialog(parent=self, directory=direc)
+        dest = dialog.getExistingDirectory()
+
+        if dest and os.path.isdir(dest):
+            self.setText(dest)
+            self.path_selected.emit(dest)
+            self.setStyleSheet("border: none;")
+            self.temp_path = dest
+
+        return super().mouseReleaseEvent(ev)
 
 
 class SearchApp(QWidget):
