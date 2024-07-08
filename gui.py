@@ -112,15 +112,22 @@ class DraggableLabel(QLabel):
         return super().mouseReleaseEvent(ev)
     
     def enterEvent(self, a0: QEvent | None) -> None:
+        self.entered_style()
+        return super().enterEvent(a0)
+    
+    def leaveEvent(self, a0: QEvent | None) -> None:
+        self.leaved_style()
+        return super().leaveEvent(a0)
+    
+    def entered_style(self):
         self.setText(self.dashed_text)
         self.setStyleSheet(
             f"""
             {self.dashed_border()};
             background-color: #656565;
             """)
-        return super().enterEvent(a0)
-    
-    def leaveEvent(self, a0: QEvent | None) -> None:
+
+    def leaved_style(self):
         if self.selected_path:
             self.setText(f"Место поиска:\n\n{self.selected_path}")
             self.setStyleSheet(
@@ -135,7 +142,6 @@ class DraggableLabel(QLabel):
                 {self.dashed_border()};
                 background-color: transparent;
                 """)
-        return super().leaveEvent(a0)
 
 
 class ChildWindow(QWidget):
@@ -250,7 +256,8 @@ class SearchApp(QWidget):
 
     def btn_search_cmd(self):
         if not self.path or not os.path.exists(self.path):
-            print("Укажите место поиска")
+            self.get_path_wid.entered_style()
+            QTimer.singleShot(300, self.get_path_wid.leaved_style)
             return
 
         text: str = self.input_text.text()
