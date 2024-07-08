@@ -1,10 +1,9 @@
 import os
 import subprocess
 import sys
-from functools import partial
 
-from PyQt5.QtCore import QEvent, Qt, QThread, pyqtSignal
-from PyQt5.QtGui import (QDragEnterEvent, QDragLeaveEvent, QDropEvent,
+from PyQt5.QtCore import QEvent, Qt, QThread, pyqtSignal, QTimer
+from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent, QDropEvent,
                          QGuiApplication, QKeyEvent, QIcon, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
                              QScrollArea, QSpacerItem, QVBoxLayout, QWidget, QFileDialog)
@@ -13,15 +12,19 @@ from cfg import Cfg
 
 
 class SearchThread(QThread):
-    result = pyqtSignal(str)
+    found_file = pyqtSignal(str)
     finished = pyqtSignal()
-    stoped = pyqtSignal()
+    force_stop_thread = pyqtSignal()
 
     def __init__(self, path: str, filename: str):
         super().__init__()
         self.path = path
         self.filename = filename
         self.stop_flag = False
+        self.force_stop_thread.connect(self.stop_thread)
+
+    def stop_thread(self):
+        self.stop_flag = True
 
     def run(self):
         self.stop_flag = False
@@ -33,10 +36,9 @@ class SearchThread(QThread):
                 name_b = file.lower()
 
                 if name_a in name_b or name_a == name_b:
-                    self.result.emit(os.path.join(root, file))
+                    self.found_file.emit(os.path.join(root, file))
 
                 if self.stop_flag:
-                    self.stoped.emit()
                     return
 
         self.finished.emit()
@@ -136,6 +138,63 @@ class DraggableLabel(QLabel):
         return super().leaveEvent(a0)
 
 
+class ChildWindow(QWidget):
+    closed = pyqtSignal()
+    change_title = pyqtSignal()
+
+    def __init__(self, parent: QWidget, title: str):
+        super().__init__()
+        self.title = title
+        self.change_title.connect(self.set_title)
+
+        self.setMinimumSize(400, 215)
+        self.move(parent.x() + parent.width() + 10, parent.y())
+
+        scroll_layout = QVBoxLayout()
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(0)
+        self.setLayout(scroll_layout)
+
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.horizontalScrollBar().setDisabled(True)
+        scroll_layout.addWidget(self.scroll_area)
+
+        in_scroll_widget = QWidget()
+        self.scroll_area.setWidget(in_scroll_widget)
+
+        self.base_layout = QVBoxLayout()
+        self.base_layout.setContentsMargins(10, 0, 0, 0)
+        in_scroll_widget.setLayout(self.base_layout)
+
+        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
+        t = f"Идет поиск \"{title}\""
+        self.main_title = QLabel(text=t)
+        self.setWindowTitle(t)
+        self.base_layout.addWidget(self.main_title)
+
+    def add_btn(self, path: str):
+        filename = os.path.basename(path)
+        btn = QPushButton(text=filename)
+        btn.setStyleSheet("QPushButton { text-align: left;}")
+        self.base_layout.addWidget(btn)
+        btn.clicked.connect(lambda: self.article_btn_cmd(path=path))
+
+    def article_btn_cmd(self, path: str):
+        if os.path.exists(path):
+            subprocess.run(["open", "-R", path])
+
+    def set_title(self):
+        t = f"Результаты поиска: \"{self.title}\""
+        self.main_title.setText(t)
+        self.setWindowTitle(t)
+
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
+        self.closed.emit()
+        return super().closeEvent(a0)
+
+
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -151,62 +210,33 @@ class SearchApp(QWidget):
         self.center()
 
     def init_ui(self):
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setFixedWidth(self.base_w)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setContentsMargins(0, 0, 0, 0)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.scroll_area.setObjectName("scroll")
-        self.scroll_area.setStyleSheet(f"#scroll {{border: 0px;}}")
-
-        self.base_widget = QWidget()
-        self.scroll_area.setWidget(self.base_widget)
-
         self.base_layout = QVBoxLayout()
         self.base_layout.setContentsMargins(0, 0, 0, 0)
         self.base_layout.setSpacing(0)
-        self.base_widget.setLayout(self.base_layout)
+        self.setLayout(self.base_layout)
 
-        self.fixed_widget = QWidget()
-        self.fixed_widget.setFixedSize(self.base_w - 10, self.base_h)
-        self.base_layout.addWidget(self.fixed_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
 
-        self.fixed_layout = QVBoxLayout()
-        self.fixed_layout.setContentsMargins(0, 0, 0, 0)
-        self.fixed_layout.setSpacing(0)
-        self.fixed_widget.setLayout(self.fixed_layout)
-
-        # DRAGABLE EVENT
-
-        self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
         self.get_path_wid = DraggableLabel()
         self.get_path_wid.setFixedSize(self.base_w - 20, 100)
         self.get_path_wid.path_selected.connect(self.get_path_wid_cmd)
-        self.fixed_layout.addWidget(self.get_path_wid)
-        self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
+        self.base_layout.addWidget(self.get_path_wid, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
 
         # SEARCH INPUT
         self.input_text = QLineEdit()
         self.input_text.setFixedSize(self.base_w - 20, 30)
         self.input_text.setStyleSheet("padding-left: 5px; border-radius: 5px;")
         self.input_text.setPlaceholderText("Вставьте имя файла")
-        self.fixed_layout.addWidget(self.input_text)
+        self.base_layout.addWidget(self.input_text)
 
-        self.fixed_layout.addSpacerItem(QSpacerItem(0, 10))
+        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
 
         self.search_button = QPushButton("Поиск")
         self.search_button.setFixedWidth(self.base_w // 2)
         self.search_button.clicked.connect(self.btn_search_cmd)
-        self.fixed_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        self.fixed_layout.addStretch()
-        
-        self.btns_widget = QWidget()
-        self.base_layout.addWidget(self.btns_widget)
-
-        self.btns_layout = QVBoxLayout()
-        self.btns_layout.setContentsMargins(0, 0, 0, 0)
-        self.btns_widget.setLayout(self.btns_layout)
+        self.base_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.btns_count = 0
 
@@ -218,86 +248,28 @@ class SearchApp(QWidget):
             self.btn_search_cmd()
         return super().keyPressEvent(a0)
 
-    def remove_article_btns(self):
-        self.btns_count = 0
-        for i in reversed(range(self.btns_layout.count())):
-            self.btns_layout.itemAt(i).widget().hide()
-            self.btns_layout.itemAt(i).widget().close()
-        self.setFixedSize(self.base_w, self.base_h)
-        # self.scroll_area.resize(self.base_w, self.base_h - 10)
-
     def btn_search_cmd(self):
-        try:
-            self.btn_search_cmd_actions()
-        except Exception:
-            pass
-
-    def btn_search_cmd_actions(self):
-        self.temp_h = self.base_h
-        self.remove_article_btns()
-        self.setFocus()
-
-        if self.search_thread and self.search_thread.isRunning():
-            self.search_thread.stop_flag = True
-
         if not self.path or not os.path.exists(self.path):
-            lbl = QLabel ("Укажите место поиска")
-            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-            self.setFixedSize(self.base_w, self.base_h + 50)
-            self.scroll_area.resize(self.base_w, self.base_h + 50)
+            print("Укажите место поиска")
             return
 
         text: str = self.input_text.text()
 
         if not text:
-            lbl = QLabel ("Введите текст")
-            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-            self.setFixedSize(self.base_w, self.base_h + 50)
-            self.scroll_area.resize(self.base_w, self.base_h + 50)
+            print("Введите текст")
             return
         else:
             text = text.strip()
-        
+
+        self.child_win = ChildWindow(parent=self, title=text)
+        self.child_win.show()
+
         self.search_thread = SearchThread(self.path, text)
-        self.search_thread.result.connect(self.add_article_btn)
-        self.search_thread.finished.connect(self.finish_search)
-        self.search_thread.stoped.connect(self.stoped_thread)
-        self.search_button.setText("Ищу...")
+        self.search_thread.found_file.connect(lambda path: self.child_win.add_btn(path=path))
+        self.search_thread.finished.connect(self.child_win.change_title.emit)
+        self.child_win.closed.connect(self.search_thread.force_stop_thread.emit)
         self.search_thread.start()
 
-    def stoped_thread(self):
-        pass
-
-    def finish_search(self):
-        self.search_button.setText("Поиск")
-
-        if self.btns_count == 0:
-            lbl = QLabel ("Не найдено")
-            self.btns_layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-            self.setFixedSize(self.base_w, self.base_h + 50)
-            self.scroll_area.resize(self.base_w, self.base_h + 50)
-
-    def add_article_btn(self, path):
-        filename = os.path.basename(path)
-
-        btn = QPushButton(filename, self)
-        btn.clicked.connect(partial(self.article_btn_cmd, path))
-        btn.setStyleSheet("text-align:left")
-        btn.setFixedWidth(self.base_w - 20)
-        self.btns_layout.addWidget(btn)
-        self.btns_count += 1
-
-        self.temp_h += 35
-
-        if self.temp_h < 600:
-            self.setFixedSize(self.base_w, self.temp_h)
-            self.scroll_area.resize(self.base_w, self.temp_h)
-
-    def article_btn_cmd(self, path: str):
-        if os.path.exists(path):
-            subprocess.run(["open", "-R", path])
-        else:
-            self.warning()
 
     def center(self):
         screens = QGuiApplication.screens()
