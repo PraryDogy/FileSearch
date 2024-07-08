@@ -47,7 +47,7 @@ class DraggableLabel(QLabel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.dashed_text = "Перетяните сюда папку для поиска или\nнажмите для выбора"
+        self.dashed_text = "Перетяните сюда папку или\nнажмите для выбора места поиска"
         self.selected_path = None
         self.setText(self.dashed_text)
         self.setAcceptDrops(True)
@@ -68,7 +68,7 @@ class DraggableLabel(QLabel):
     
     def dragLeaveEvent(self, a0: QDragLeaveEvent | None) -> None:
         if self.selected_path:
-            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.setText(f"Место поиска:\n\n{self.selected_path}")
             self.setStyleSheet("border: none; padding-left: 5px;;")
 
         return super().dragLeaveEvent(a0)
@@ -82,7 +82,7 @@ class DraggableLabel(QLabel):
                                padding-left: 5px;;
                                """)
             self.selected_path = path
-            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.setText(f"Место поиска:\n\n{self.selected_path}")
             return super().dropEvent(a0)
         
     def mouseReleaseEvent(self, ev: QMouseEvent | None) -> None:
@@ -105,7 +105,7 @@ class DraggableLabel(QLabel):
                 padding-left: 5px;
                 """)
             self.selected_path = dest
-            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.setText(f"Место поиска:\n\n{self.selected_path}")
 
         return super().mouseReleaseEvent(ev)
     
@@ -120,7 +120,7 @@ class DraggableLabel(QLabel):
     
     def leaveEvent(self, a0: QEvent | None) -> None:
         if self.selected_path:
-            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.setText(f"Место поиска:\n\n{self.selected_path}")
             self.setStyleSheet(
                 """
                 border: none;
