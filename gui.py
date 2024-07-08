@@ -3,7 +3,7 @@ import subprocess
 import sys
 from functools import partial
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QEvent, Qt, QThread, pyqtSignal
 from PyQt5.QtGui import (QDragEnterEvent, QDragLeaveEvent, QDropEvent,
                          QGuiApplication, QKeyEvent, QIcon, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
@@ -47,57 +47,93 @@ class DraggableLabel(QLabel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.base_text = "Перетяните сюда папку для поиска"
-        self.temp_path = None
-        self.setText(self.base_text)
+        self.dashed_text = "Перетяните сюда папку для поиска или\nнажмите для выбора"
+        self.selected_path = None
+        self.setText(self.dashed_text)
         self.setAcceptDrops(True)
-        self.setStyleSheet("border: 2px dashed gray; padding: 20px; border-radius: 5px;")
+        self.setStyleSheet(self.dashed_border())
         self.setWordWrap(True)
+
+    def dashed_border(self):
+        return "border: 2px dashed gray; padding-left: 20px;; border-radius: 5px;"
 
     def dragEnterEvent(self, a0: QDragEnterEvent | None) -> None:
         if a0.mimeData().hasUrls():
-            self.setText(self.base_text)
-            self.setStyleSheet("border: 2px dashed gray; padding: 20px; border-radius: 5px;")
+            self.setText(self.dashed_text)
+            self.setStyleSheet(self.dashed_border())
             a0.accept()
         else:
             a0.ignore()
         return super().dragEnterEvent(a0)
     
     def dragLeaveEvent(self, a0: QDragLeaveEvent | None) -> None:
-        if self.temp_path:
-            self.setText(self.temp_path)
-            self.setStyleSheet("border: none;")
+        if self.selected_path:
+            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.setStyleSheet("border: none; padding-left: 5px;;")
 
         return super().dragLeaveEvent(a0)
 
     def dropEvent(self, a0: QDropEvent | None) -> None:
         path = a0.mimeData().urls()[0].toLocalFile()
         if os.path.isdir(path):
-            self.setText(path)
             self.path_selected.emit(path)
-            self.setStyleSheet("border: none;")
-            self.temp_path = path
+            self.setStyleSheet("""
+                               border: none;
+                               padding-left: 5px;;
+                               """)
+            self.selected_path = path
+            self.setText(f"Место поиска:\n{self.selected_path}")
             return super().dropEvent(a0)
         
     def mouseReleaseEvent(self, ev: QMouseEvent | None) -> None:
         if ev.button() != Qt.MouseButton.LeftButton:
             return
 
-        if not self.temp_path:
+        if not self.selected_path:
             direc = os.path.join(os.path.expanduser("~"), "Downloads")
         else:
-            direc = self.temp_path
+            direc = self.selected_path
 
         dialog = QFileDialog(parent=self, directory=direc)
         dest = dialog.getExistingDirectory()
 
         if dest and os.path.isdir(dest):
-            self.setText(dest)
             self.path_selected.emit(dest)
-            self.setStyleSheet("border: none;")
-            self.temp_path = dest
+            self.setStyleSheet(
+                """
+                border: none;
+                padding-left: 5px;
+                """)
+            self.selected_path = dest
+            self.setText(f"Место поиска:\n{self.selected_path}")
 
         return super().mouseReleaseEvent(ev)
+    
+    def enterEvent(self, a0: QEvent | None) -> None:
+        self.setText(self.dashed_text)
+        self.setStyleSheet(
+            f"""
+            {self.dashed_border()};
+            background-color: #656565;
+            """)
+        return super().enterEvent(a0)
+    
+    def leaveEvent(self, a0: QEvent | None) -> None:
+        if self.selected_path:
+            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.setStyleSheet(
+                """
+                border: none;
+                background-color: transparent;
+                padding-left: 5px;
+                """)
+        else:
+            self.setStyleSheet(
+                f"""
+                {self.dashed_border()};
+                background-color: transparent;
+                """)
+        return super().leaveEvent(a0)
 
 
 class SearchApp(QWidget):
