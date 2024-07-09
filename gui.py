@@ -173,7 +173,7 @@ class ChildWindow(QWidget):
         self.scroll_area.setWidget(in_scroll_widget)
 
         self.base_layout = QVBoxLayout()
-        self.base_layout.setContentsMargins(10, 0, 0, 0)
+        self.base_layout.setContentsMargins(10, 0, 10, 0)
         in_scroll_widget.setLayout(self.base_layout)
 
         self.base_layout.addSpacerItem(QSpacerItem(0, 10))
@@ -182,27 +182,15 @@ class ChildWindow(QWidget):
         self.setWindowTitle(t)
         self.base_layout.addWidget(self.main_title)
 
-        self.path_btns: dict = {}
-
-        self.updater_timer = QTimer(self)
-        self.updater_timer.timeout.connect(self.updater_timer_cmd)
-        self.updater_timer.start(1000)
-
-    def updater_timer_cmd(self):
-        for path, widget in self.path_btns.items():
-            if widget is None:
-                filename = os.path.basename(path)
-                btn = QPushButton(text=filename)
-                btn.setStyleSheet("QPushButton { text-align: left;}")
-                self.base_layout.addWidget(btn)
-                btn.clicked.connect(lambda: self.article_btn_cmd(path=path))
-
-                self.path_btns[path] = btn
-
     def add_btn(self, path: str):
-        self.path_btns[path] = None
+        filename = os.path.basename(path)
+        lbl = QLabel(text=filename)
+        self.base_layout.addWidget(lbl)
+        lbl.mouseReleaseEvent = lambda e: self.article_btn_cmd(widget=lbl, path=path)
 
-    def article_btn_cmd(self, path: str):
+    def article_btn_cmd(self, widget: QLabel, path: str):
+        widget.setStyleSheet("background-color: #a7a7a7;")
+        QTimer.singleShot(200, lambda: widget.setStyleSheet("background-color: transparent;"))
         if os.path.exists(path):
             subprocess.run(["open", "-R", path])
 
