@@ -1,15 +1,17 @@
 import os
 import subprocess
 import sys
+from time import sleep
 
-from PyQt5.QtCore import QEvent, Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent, QDropEvent,
-                         QGuiApplication, QKeyEvent, QIcon, QMouseEvent)
-from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
-                             QScrollArea, QSpacerItem, QVBoxLayout, QWidget, QFileDialog)
+from PyQt5.QtCore import QEvent, Qt, QThread, QTimer, pyqtSignal
+from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent,
+                         QDropEvent, QGuiApplication, QIcon, QKeyEvent,
+                         QMouseEvent)
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QLabel, QLineEdit,
+                             QPushButton, QScrollArea, QSizePolicy,
+                             QSpacerItem, QVBoxLayout, QWidget, QFrame)
 
 from cfg import Cfg
-from time import sleep
 
 
 class SearchThread(QThread):
@@ -152,16 +154,30 @@ class ChildWindow(QWidget):
 
     def __init__(self, parent: QWidget, title: str):
         super().__init__()
+        self.setWindowTitle("Поиск: " + f"\"{title}\"")
         self.title = title
         self.change_title.connect(self.set_title)
 
-        self.setMinimumSize(400, 215)
+        self.setMinimumSize(400, 380)
         self.move(parent.x() + parent.width() + 10, parent.y())
 
         scroll_layout = QVBoxLayout()
         scroll_layout.setContentsMargins(0, 0, 0, 0)
         scroll_layout.setSpacing(0)
         self.setLayout(scroll_layout)
+
+        scroll_layout.addSpacerItem(QSpacerItem(0, 5))
+
+        self.main_title = QLabel()
+        self.main_title.setStyleSheet("padding-left: 5px;")
+        scroll_layout.addWidget(self.main_title)
+
+        scroll_layout.addSpacerItem(QSpacerItem(0, 5))
+
+        frame = QFrame()
+        frame.setFixedHeight(1)
+        frame.setStyleSheet("background-color: #a7a7a7")
+        scroll_layout.addWidget(frame)
 
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
@@ -177,15 +193,33 @@ class ChildWindow(QWidget):
         in_scroll_widget.setLayout(self.base_layout)
 
         self.base_layout.addSpacerItem(QSpacerItem(0, 10))
-        t = f"Идет поиск \"{title}\""
-        self.main_title = QLabel(text=t)
-        self.setWindowTitle(t)
-        self.base_layout.addWidget(self.main_title)
+
+        self.bottom_spacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.base_layout.addItem(self.bottom_spacer)
+
+        self.dots_count = 0
+        self.dynamic_text()
+
+    def dynamic_text(self):
+        if "Результаты" in self.main_title.text():
+            return
+
+        t = f"Идет поиск: \"{self.title}\"" + " " + "." * self.dots_count
+        self.dots_count += 1
+
+        self.main_title.setText(t)
+
+        if self.dots_count > 10:
+            self.dots_count = 0
+
+        QTimer.singleShot(200, self.dynamic_text)
 
     def add_btn(self, path: str):
         filename = os.path.basename(path)
         lbl = QLabel(text=filename)
-        self.base_layout.addWidget(lbl)
+        lbl.setFixedHeight(25)
+        self.base_layout.insertWidget(self.base_layout.count() - 1, lbl)
+
         lbl.mouseReleaseEvent = lambda e: self.article_btn_cmd(widget=lbl, path=path)
 
     def article_btn_cmd(self, widget: QLabel, path: str):
@@ -197,7 +231,6 @@ class ChildWindow(QWidget):
     def set_title(self):
         t = f"Результаты поиска: \"{self.title}\""
         self.main_title.setText(t)
-        self.setWindowTitle(t)
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.closed.emit()
