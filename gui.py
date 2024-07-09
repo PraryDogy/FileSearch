@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QPushButton,
                              QScrollArea, QSpacerItem, QVBoxLayout, QWidget, QFileDialog)
 
 from cfg import Cfg
+from time import sleep
 
 
 class SearchThread(QThread):
@@ -37,6 +38,7 @@ class SearchThread(QThread):
 
                 if name_a in name_b or name_a == name_b:
                     self.found_file.emit(os.path.join(root, file))
+                    sleep(0.5)
 
                 if self.stop_flag:
                     return
@@ -49,7 +51,7 @@ class DraggableLabel(QLabel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.dashed_text = "Перетяните сюда папку или\nнажмите для выбора места поиска"
+        self.dashed_text = "Укажите место поиска"
         self.selected_path = None
         self.setText(self.dashed_text)
         self.setAcceptDrops(True)
@@ -57,7 +59,7 @@ class DraggableLabel(QLabel):
         self.setWordWrap(True)
 
     def dashed_border(self):
-        return "border: 2px dashed gray; padding-left: 20px;; border-radius: 5px;"
+        return "border: 2px dashed gray; padding-left: 5px;; border-radius: 5px;"
 
     def dragEnterEvent(self, a0: QDragEnterEvent | None) -> None:
         if a0.mimeData().hasUrls():
@@ -70,7 +72,7 @@ class DraggableLabel(QLabel):
     
     def dragLeaveEvent(self, a0: QDragLeaveEvent | None) -> None:
         if self.selected_path:
-            self.setText(f"Место поиска:\n\n{self.selected_path}")
+            self.setText(f"Место поиска:\n{self.selected_path}")
             self.setStyleSheet("border: none; padding-left: 5px;;")
 
         return super().dragLeaveEvent(a0)
@@ -84,7 +86,7 @@ class DraggableLabel(QLabel):
                                padding-left: 5px;;
                                """)
             self.selected_path = path
-            self.setText(f"Место поиска:\n\n{self.selected_path}")
+            self.setText(f"Место поиска:\n{self.selected_path}")
             return super().dropEvent(a0)
         
     def mouseReleaseEvent(self, ev: QMouseEvent | None) -> None:
@@ -107,7 +109,7 @@ class DraggableLabel(QLabel):
                 padding-left: 5px;
                 """)
             self.selected_path = dest
-            self.setText(f"Место поиска:\n\n{self.selected_path}")
+            self.setText(f"Место поиска:\n{self.selected_path}")
 
         return super().mouseReleaseEvent(ev)
     
@@ -124,12 +126,12 @@ class DraggableLabel(QLabel):
         self.setStyleSheet(
             f"""
             {self.dashed_border()};
-            background-color: #656565;
+            background-color: #a7a7a7;
             """)
 
     def leaved_style(self):
         if self.selected_path:
-            self.setText(f"Место поиска:\n\n{self.selected_path}")
+            self.setText(f"Место поиска:\n{self.selected_path}")
             self.setStyleSheet(
                 """
                 border: none;
@@ -180,12 +182,25 @@ class ChildWindow(QWidget):
         self.setWindowTitle(t)
         self.base_layout.addWidget(self.main_title)
 
+        self.path_btns: dict = {}
+
+        self.updater_timer = QTimer(self)
+        self.updater_timer.timeout.connect(self.updater_timer_cmd)
+        self.updater_timer.start(1000)
+
+    def updater_timer_cmd(self):
+        for path, widget in self.path_btns.items():
+            if widget is None:
+                filename = os.path.basename(path)
+                btn = QPushButton(text=filename)
+                btn.setStyleSheet("QPushButton { text-align: left;}")
+                self.base_layout.addWidget(btn)
+                btn.clicked.connect(lambda: self.article_btn_cmd(path=path))
+
+                self.path_btns[path] = btn
+
     def add_btn(self, path: str):
-        filename = os.path.basename(path)
-        btn = QPushButton(text=filename)
-        btn.setStyleSheet("QPushButton { text-align: left;}")
-        self.base_layout.addWidget(btn)
-        btn.clicked.connect(lambda: self.article_btn_cmd(path=path))
+        self.path_btns[path] = None
 
     def article_btn_cmd(self, path: str):
         if os.path.exists(path):
@@ -233,7 +248,7 @@ class SearchApp(QWidget):
         # SEARCH INPUT
         self.input_text = QLineEdit()
         self.input_text.setFixedSize(self.base_w - 20, 30)
-        self.input_text.setStyleSheet("padding-left: 5px; border-radius: 5px;")
+        self.input_text.setStyleSheet("padding-left: 5px;")
         self.input_text.setPlaceholderText("Вставьте имя файла")
         self.base_layout.addWidget(self.input_text)
 
@@ -245,6 +260,12 @@ class SearchApp(QWidget):
         self.base_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.btns_count = 0
+
+    def input_default_style(self):
+        self.input_text.setStyleSheet("padding-left: 5px;")
+
+    def input_selected_style(self):
+        self.input_text.setStyleSheet("padding-left: 5px; background-color: #a7a7a7;")
 
     def get_path_wid_cmd(self, value: str):
         self.path = value
@@ -263,7 +284,8 @@ class SearchApp(QWidget):
         text: str = self.input_text.text()
 
         if not text:
-            print("Введите текст")
+            self.input_selected_style()
+            QTimer.singleShot(300, self.input_default_style)
             return
         else:
             text = text.strip()
@@ -274,9 +296,12 @@ class SearchApp(QWidget):
         self.search_thread = SearchThread(self.path, text)
         self.search_thread.found_file.connect(lambda path: self.child_win.add_btn(path=path))
         self.search_thread.finished.connect(self.child_win.change_title.emit)
-        self.child_win.closed.connect(self.search_thread.force_stop_thread.emit)
+        self.child_win.closed.connect(lambda: self.cancel_search(self.search_thread))
         self.search_thread.start()
 
+    def cancel_search(self, task: SearchThread):
+        if task.isRunning():
+            task.force_stop_thread.emit()
 
     def center(self):
         screens = QGuiApplication.screens()
