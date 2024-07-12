@@ -7,9 +7,10 @@ from PyQt5.QtCore import QEvent, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent,
                          QDropEvent, QGuiApplication, QIcon, QKeyEvent,
                          QMouseEvent)
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QLabel, QLineEdit,
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QFrame, QLabel,
+                             QLineEdit, QListWidget, QListWidgetItem,
                              QPushButton, QScrollArea, QSizePolicy,
-                             QSpacerItem, QVBoxLayout, QWidget, QFrame)
+                             QSpacerItem, QVBoxLayout, QWidget)
 
 from cfg import Cfg
 
@@ -161,41 +162,22 @@ class ChildWindow(QWidget):
         self.setMinimumSize(400, 380)
         self.move(parent.x() + parent.width() + 10, parent.y())
 
-        scroll_layout = QVBoxLayout()
-        scroll_layout.setContentsMargins(0, 0, 0, 0)
-        scroll_layout.setSpacing(0)
-        self.setLayout(scroll_layout)
+        self.v_layout = QVBoxLayout()
+        self.v_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.v_layout)
 
-        scroll_layout.addSpacerItem(QSpacerItem(0, 5))
+        self.v_layout.addSpacerItem(QSpacerItem(0, 5))
 
-        self.main_title = QLabel()
+        self.v_layout.addSpacerItem(QSpacerItem(0, 5))
+        self.main_title = QLabel(parent=self)
         self.main_title.setStyleSheet("padding-left: 5px;")
-        scroll_layout.addWidget(self.main_title)
+        self.v_layout.addWidget(self.main_title)
+        self.v_layout.addSpacerItem(QSpacerItem(0, 5))
 
-        scroll_layout.addSpacerItem(QSpacerItem(0, 5))
-
-        frame = QFrame()
-        frame.setFixedHeight(1)
-        frame.setStyleSheet("background-color: #a7a7a7")
-        scroll_layout.addWidget(frame)
-
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.scroll_area.horizontalScrollBar().setDisabled(True)
-        scroll_layout.addWidget(self.scroll_area)
-
-        in_scroll_widget = QWidget()
-        self.scroll_area.setWidget(in_scroll_widget)
-
-        self.base_layout = QVBoxLayout()
-        self.base_layout.setContentsMargins(10, 0, 10, 0)
-        in_scroll_widget.setLayout(self.base_layout)
-
-        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
-
-        self.bottom_spacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.base_layout.addItem(self.bottom_spacer)
+        self.list_widget = QListWidget(parent=self)
+        self.list_widget.setSelectionMode(QListWidget.NoSelection)
+        self.list_widget.verticalScrollBar().setSingleStep(15)
+        self.v_layout.addWidget(self.list_widget)
 
         self.dots_count = 0
         self.dynamic_text()
@@ -216,15 +198,21 @@ class ChildWindow(QWidget):
 
     def add_btn(self, path: str):
         filename = os.path.basename(path)
-        lbl = QLabel(text=filename)
-        lbl.setFixedHeight(25)
-        self.base_layout.insertWidget(self.base_layout.count() - 1, lbl)
 
-        lbl.mouseReleaseEvent = lambda e: self.article_btn_cmd(widget=lbl, path=path)
+        wid = QLabel(text=filename)
+        wid.setStyleSheet("padding-left: 5px;")
+        wid.setFixedHeight(25)
+        list_item = QListWidgetItem()
+
+        list_item.setSizeHint(wid.sizeHint())
+        self.list_widget.addItem(list_item)
+        self.list_widget.setItemWidget(list_item, wid)
+
+        wid.mouseReleaseEvent = lambda e: self.article_btn_cmd(widget=wid, path=path)
 
     def article_btn_cmd(self, widget: QLabel, path: str):
-        widget.setStyleSheet("background-color: #a7a7a7;")
-        QTimer.singleShot(200, lambda: widget.setStyleSheet("background-color: transparent;"))
+        widget.setStyleSheet("background-color: #a7a7a7; padding-left: 5px;")
+        QTimer.singleShot(200, lambda: widget.setStyleSheet("padding-left: 5px;"))
         if os.path.exists(path):
             subprocess.run(["open", "-R", path])
 
