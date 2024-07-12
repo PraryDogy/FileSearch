@@ -155,12 +155,15 @@ class ChildWindow(QWidget):
 
     def __init__(self, parent: QWidget, title: str):
         super().__init__()
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowTitle("Поиск: " + f"\"{title}\"")
         self.title = title
         self.change_title.connect(self.set_title)
 
         self.setMinimumSize(400, 380)
-        self.move(parent.x() + parent.width() + 10, parent.y())
+        geo = self.geometry()
+        geo.moveCenter(parent.geometry().center())
+        self.setGeometry(geo)
 
         self.v_layout = QVBoxLayout()
         self.v_layout.setContentsMargins(0, 0, 0, 0)
