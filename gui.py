@@ -330,7 +330,7 @@ class SearchApp(QWidget):
     
 if os.path.exists("lib"): 
     #lib folder appears when we pack this project to .app with py2app
-    plugin_path = "lib/python3.11/site-packages/PyQt5/Qt5/plugins"
+    plugin_path = "lib/python3.11/PyQt5/Qt5/plugins"
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
 else:
