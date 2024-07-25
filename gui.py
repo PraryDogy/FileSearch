@@ -229,6 +229,7 @@ class ChildWindow(QWidget):
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() == Qt.Key.Key_Escape:
             self.closed.emit()
+            self.close()
         return super().keyPressEvent(a0)
 
 
@@ -329,17 +330,11 @@ class SearchApp(QWidget):
     
 if os.path.exists("lib"): 
     #lib folder appears when we pack this project to .app with py2app
+    plugin_path = "lib/python3.11/site-packages/PyQt5/Qt5/plugins"
+    os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
-    py_ver = sys.version_info
-    py_ver = f"{py_ver.major}.{py_ver.minor}"
-
-    plugin_path = os.path.join(
-        "lib",
-        f"python{py_ver}",
-        "PyQt5",
-        "Qt5",
-        "plugins",
-        )
+else:
+    plugin_path = "env/lib/python3.11/site-packages/PyQt5/Qt5/plugins"
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
 app = QApplication(sys.argv)

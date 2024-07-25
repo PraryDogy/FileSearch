@@ -34,8 +34,14 @@ OPTIONS = {"iconfile": "icon/MiuzSearch.icns",
 
 
 if __name__ == "__main__":
-
     sys.argv.append("py2app")
+
+    try:
+        shutil.rmtree("build")
+        shutil.rmtree(".eggs")
+        shutil.rmtree("dist")
+    except FileNotFoundError:
+        pass
 
     try:
         setup(
