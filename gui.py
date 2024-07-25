@@ -327,29 +327,28 @@ class SearchApp(QWidget):
         self.move(window_geometry.topLeft())
 
     
-if __name__ == "__main__":
-    if os.path.exists("lib"): 
-        #lib folder appears when we pack this project to .app with py2app
+if os.path.exists("lib"): 
+    #lib folder appears when we pack this project to .app with py2app
 
-        py_ver = sys.version_info
-        py_ver = f"{py_ver.major}.{py_ver.minor}"
+    py_ver = sys.version_info
+    py_ver = f"{py_ver.major}.{py_ver.minor}"
 
-        plugin_path = os.path.join(
-            "lib",
-            f"python{py_ver}",
-            "PyQt5",
-            "Qt5",
-            "plugins",
-            )
-        os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
+    plugin_path = os.path.join(
+        "lib",
+        f"python{py_ver}",
+        "PyQt5",
+        "Qt5",
+        "plugins",
+        )
+    os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
-    app = QApplication(sys.argv)
-    app.setStyle('macos')
+app = QApplication(sys.argv)
+app.setStyle('macos')
 
-    if os.path.dirname(__file__) != "Resources":
-        app.setWindowIcon(QIcon("icon/MiuzSearch.icns"))
-    
-    window = SearchApp()
-    window.show()
+if os.path.dirname(__file__) != "Resources":
+    app.setWindowIcon(QIcon("icon/MiuzSearch.icns"))
 
-    sys.exit(app.exec())
+window = SearchApp()
+window.show()
+
+app.exec_()
