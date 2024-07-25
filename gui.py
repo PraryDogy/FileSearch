@@ -7,9 +7,8 @@ from PyQt5.QtCore import QEvent, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent,
                          QDropEvent, QGuiApplication, QIcon, QKeyEvent,
                          QMouseEvent)
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QFrame, QLabel,
-                             QLineEdit, QListWidget, QListWidgetItem,
-                             QPushButton, QScrollArea, QSizePolicy,
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QLabel, QLineEdit,
+                             QListWidget, QListWidgetItem, QPushButton,
                              QSpacerItem, QVBoxLayout, QWidget)
 
 from cfg import Cfg
@@ -226,6 +225,11 @@ class ChildWindow(QWidget):
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.closed.emit()
         return super().closeEvent(a0)
+    
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+        if a0.key() == Qt.Key.Key_Escape:
+            self.closed.emit()
+        return super().keyPressEvent(a0)
 
 
 class SearchApp(QWidget):
