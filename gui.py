@@ -9,7 +9,7 @@ from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent,
                          QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QLabel, QLineEdit,
                              QListWidget, QListWidgetItem, QPushButton,
-                             QSpacerItem, QVBoxLayout, QWidget)
+                             QSpacerItem, QVBoxLayout, QWidget, QHBoxLayout)
 
 from cfg import Cfg
 
@@ -48,53 +48,61 @@ class SearchThread(QThread):
         self.finished.emit()
 
 
-class DraggableLabel(QLabel):
+class DraggableLabel(QWidget):
     path_selected_signal = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.dashed_text = "Укажите место поиска"
+
         self.selected_path = None
-        self.setText(self.dashed_text)
         self.setAcceptDrops(True)
-        self.setStyleSheet(self.dashed_border())
-        self.setWordWrap(True)
+
+        self.v_layout = QVBoxLayout()
+        self.v_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.v_layout)
+
+        h_wid = QWidget(parent=self)
+        self.v_layout.addWidget(h_wid)
+
+        h_layout = QHBoxLayout()
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_wid.setLayout(h_layout)
+
+        self.browse_btn = QPushButton(parent=self, text="Обзор")
+        self.browse_btn.clicked.connect(self.browse_cmd)
+        h_layout.addWidget(self.browse_btn)
+
+        h_layout.addSpacerItem(QSpacerItem(10, 0))
+
+        self.finder_btn = QPushButton(parent=self, text="Получить из Finder")
+        h_layout.addWidget(self.finder_btn)
+
+        self.path_label = QLabel(text="Укажите место поиска")
+        self.path_label.setStyleSheet("padding-left: 6px;")
+        self.path_label.setWordWrap(True)
+        self.v_layout.addWidget(self.path_label)
+
+        self.v_layout.addStretch()
 
     def dashed_border(self):
         return "border: 2px dashed gray; padding-left: 5px;; border-radius: 5px;"
 
     def dragEnterEvent(self, a0: QDragEnterEvent | None) -> None:
         if a0.mimeData().hasUrls():
-            self.setText(self.dashed_text)
-            self.setStyleSheet(self.dashed_border())
             a0.accept()
         else:
             a0.ignore()
         return super().dragEnterEvent(a0)
     
-    def dragLeaveEvent(self, a0: QDragLeaveEvent | None) -> None:
-        if self.selected_path:
-            self.setText(f"Место поиска:\n{self.selected_path}")
-            self.setStyleSheet("border: none; padding-left: 5px;;")
-
-        return super().dragLeaveEvent(a0)
-
     def dropEvent(self, a0: QDropEvent | None) -> None:
         path = a0.mimeData().urls()[0].toLocalFile()
         if os.path.isdir(path):
             self.path_selected_signal.emit(path)
-            self.setStyleSheet("""
-                               border: none;
-                               padding-left: 5px;;
-                               """)
             self.selected_path = path
-            self.setText(f"Место поиска:\n{self.selected_path}")
+            self.path_label.setText(self.selected_path)
             return super().dropEvent(a0)
         
-    def mouseReleaseEvent(self, ev: QMouseEvent | None) -> None:
-        if ev.button() != Qt.MouseButton.LeftButton:
-            return
-
+    def browse_cmd(self, ev: QMouseEvent | None) -> None:
         if not self.selected_path:
             direc = os.path.join(os.path.expanduser("~"), "Downloads")
         else:
@@ -105,47 +113,8 @@ class DraggableLabel(QLabel):
 
         if dest and os.path.isdir(dest):
             self.path_selected_signal.emit(dest)
-            self.setStyleSheet(
-                """
-                border: none;
-                padding-left: 5px;
-                """)
             self.selected_path = dest
-            self.setText(f"Место поиска:\n{self.selected_path}")
-
-        return super().mouseReleaseEvent(ev)
-    
-    def enterEvent(self, a0: QEvent | None) -> None:
-        self.entered_style()
-        return super().enterEvent(a0)
-    
-    def leaveEvent(self, a0: QEvent | None) -> None:
-        self.leaved_style()
-        return super().leaveEvent(a0)
-    
-    def entered_style(self):
-        self.setText(self.dashed_text)
-        self.setStyleSheet(
-            f"""
-            {self.dashed_border()};
-            background-color: #a7a7a7;
-            """)
-
-    def leaved_style(self):
-        if self.selected_path:
-            self.setText(f"Место поиска:\n{self.selected_path}")
-            self.setStyleSheet(
-                """
-                border: none;
-                background-color: transparent;
-                padding-left: 5px;
-                """)
-        else:
-            self.setStyleSheet(
-                f"""
-                {self.dashed_border()};
-                background-color: transparent;
-                """)
+            self.path_label.setText(self.selected_path)
 
 
 class ChildWindow(QWidget):
@@ -294,8 +263,6 @@ class SearchApp(QWidget):
 
     def btn_search_cmd(self):
         if not self.path or not os.path.exists(self.path):
-            self.get_path_wid.entered_style()
-            QTimer.singleShot(300, self.get_path_wid.leaved_style)
             return
 
         text: str = self.input_text.text()
