@@ -49,7 +49,7 @@ class SearchThread(QThread):
 
 
 class DraggableLabel(QLabel):
-    path_selected = pyqtSignal(str)
+    path_selected_signal = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -82,7 +82,7 @@ class DraggableLabel(QLabel):
     def dropEvent(self, a0: QDropEvent | None) -> None:
         path = a0.mimeData().urls()[0].toLocalFile()
         if os.path.isdir(path):
-            self.path_selected.emit(path)
+            self.path_selected_signal.emit(path)
             self.setStyleSheet("""
                                border: none;
                                padding-left: 5px;;
@@ -104,7 +104,7 @@ class DraggableLabel(QLabel):
         dest = dialog.getExistingDirectory()
 
         if dest and os.path.isdir(dest):
-            self.path_selected.emit(dest)
+            self.path_selected_signal.emit(dest)
             self.setStyleSheet(
                 """
                 border: none;
@@ -257,7 +257,7 @@ class SearchApp(QWidget):
 
         self.get_path_wid = DraggableLabel()
         self.get_path_wid.setFixedSize(self.base_w - 20, 100)
-        self.get_path_wid.path_selected.connect(self.get_path_wid_cmd)
+        self.get_path_wid.path_selected_signal.connect(self.get_path_wid_cmd)
         self.base_layout.addWidget(self.get_path_wid, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.base_layout.addSpacerItem(QSpacerItem(0, 10))
