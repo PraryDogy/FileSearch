@@ -3,15 +3,30 @@ import subprocess
 import sys
 from time import sleep
 
-from PyQt5.QtCore import QEvent, Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDragLeaveEvent,
-                         QDropEvent, QGuiApplication, QIcon, QKeyEvent,
-                         QMouseEvent)
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QLabel, QLineEdit,
-                             QListWidget, QListWidgetItem, QPushButton,
-                             QSpacerItem, QVBoxLayout, QWidget, QHBoxLayout)
+from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDropEvent,
+                         QGuiApplication, QIcon, QKeyEvent, QMouseEvent)
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
+                             QLineEdit, QListWidget, QListWidgetItem,
+                             QPushButton, QSpacerItem, QVBoxLayout, QWidget)
 
 from cfg import Cfg
+
+
+def get_finder_path():
+    script = '''
+    tell application "Finder"
+        if (count of Finder windows) is not 0 then
+            set thePath to (target of front window) as alias
+            return POSIX path of thePath
+        else
+            return "No Finder window open"
+        end if
+    end tell
+    '''
+    process = subprocess.Popen(['osascript', '-e', script], stdout=subprocess.PIPE)
+    output, _ = process.communicate()
+    return output.decode('utf-8').strip()
 
 
 class SearchThread(QThread):
@@ -75,6 +90,7 @@ class DraggableLabel(QWidget):
         h_layout.addSpacerItem(QSpacerItem(10, 0))
 
         self.finder_btn = QPushButton(parent=self, text="Получить из Finder")
+        self.finder_btn.clicked.connect(self.finder_cmd)
         h_layout.addWidget(self.finder_btn)
 
         self.path_label = QLabel(text="Укажите место поиска")
@@ -83,6 +99,14 @@ class DraggableLabel(QWidget):
         self.v_layout.addWidget(self.path_label)
 
         self.v_layout.addStretch()
+
+    def finder_cmd(self, event):
+        path = get_finder_path()
+        
+        if os.path.isdir(path):
+            self.path_selected_signal.emit(path)
+            self.selected_path = path
+            self.path_label.setText(self.selected_path)
 
     def dashed_border(self):
         return "border: 2px dashed gray; padding-left: 5px;; border-radius: 5px;"
