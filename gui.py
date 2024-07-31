@@ -2,8 +2,9 @@ import os
 import subprocess
 import sys
 from time import sleep
+from typing import List
 
-from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt5.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDropEvent,
                          QGuiApplication, QIcon, QKeyEvent, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
@@ -318,7 +319,33 @@ class SearchApp(QWidget):
         window_geometry.moveCenter(screen_geometry.center())
         self.move(window_geometry.topLeft())
 
+    def keyReleaseEvent(self, a0: QKeyEvent | None) -> None:
+        if a0.key() == Qt.Key.Key_W:
+            if a0.modifiers() == Qt.KeyboardModifier.ControlModifier:
+                self.hide()
+        if a0.key() == Qt.Key.Key_Q:
+            if a0.modifiers() == Qt.KeyboardModifier.ControlModifier:
+                QApplication.quit()
+        return super().keyReleaseEvent(a0)
     
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
+        self.hide()
+        a0.ignore()
+        # return super().closeEvent(a0)
+
+
+class MyApp(QApplication):
+    def __init__(self, argv: List[str]) -> None:
+        super().__init__(argv)
+        self.installEventFilter(self)
+
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
+        if a1.type() == QEvent.Type.ApplicationActivate:
+            for i in QApplication.topLevelWidgets():
+                i.show()
+        return super().eventFilter(a0, a1)
+
+
 if os.path.exists("lib"): 
     #lib folder appears when we pack this project to .app with py2app
     plugin_path = "lib/python3.11/PyQt5/Qt5/plugins"
@@ -328,7 +355,7 @@ else:
     plugin_path = "env/lib/python3.11/site-packages/PyQt5/Qt5/plugins"
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
-app = QApplication(sys.argv)
+app = MyApp(sys.argv)
 app.setStyle('macos')
 
 if os.path.dirname(__file__) != "Resources":
