@@ -59,8 +59,11 @@ class SearchThread(QThread):
                     sleep(0.5)
 
                 if self.stop_flag:
+                    print(f"search {self.filename} finished")
+                    self.finished.emit()
                     return
-
+                
+        print(f"search {self.filename} finished")
         self.finished.emit()
 
 
