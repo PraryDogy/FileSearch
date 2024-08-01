@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import traceback
 from time import sleep
 from typing import List
 
@@ -9,7 +10,8 @@ from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDropEvent,
                          QGuiApplication, QIcon, QKeyEvent, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QListWidget, QListWidgetItem,
-                             QPushButton, QSpacerItem, QVBoxLayout, QWidget)
+                             QMessageBox, QPushButton, QSpacerItem,
+                             QVBoxLayout, QWidget)
 
 from cfg import Cfg
 
@@ -357,6 +359,27 @@ class MyApp(QApplication):
         return super().eventFilter(a0, a1)
 
 
+def catch_err(exc_type, exc_value, exc_traceback):
+    error_message = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    error_dialog(error_message)
+
+
+def error_dialog(error_message):
+    error_dialog = QMessageBox()
+    error_dialog.setIcon(QMessageBox.Critical)
+    error_dialog.setWindowTitle("Error / Ошибка")
+
+    tt = "\n".join(["Отправьте ошибку / Send error", "email: loshkarev@miuz.ru", "tg: evlosh"])
+    error_dialog.setText(tt)
+    error_dialog.setDetailedText(error_message)
+
+    exit_button = QPushButton("Ок")
+    exit_button.clicked.connect(QApplication.quit)
+    error_dialog.addButton(exit_button, QMessageBox.ActionRole)
+
+    error_dialog.exec_()
+
+
 if os.path.exists("lib"): 
     #lib folder appears when we pack this project to .app with py2app
     plugin_path = "lib/python3.11/PyQt5/Qt5/plugins"
@@ -365,6 +388,9 @@ if os.path.exists("lib"):
 else:
     plugin_path = "env/lib/python3.11/site-packages/PyQt5/Qt5/plugins"
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
+
+
+sys.excepthook = catch_err
 
 app = MyApp(sys.argv)
 app.setStyle('macos')
