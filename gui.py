@@ -204,8 +204,12 @@ class ChildWindow(QWidget):
         list_item = QListWidgetItem()
 
         list_item.setSizeHint(wid.sizeHint())
-        self.list_widget.addItem(list_item)
-        self.list_widget.setItemWidget(list_item, wid)
+
+        try:
+            self.list_widget.addItem(list_item)
+            self.list_widget.setItemWidget(list_item, wid)
+        except RuntimeError:
+            return
 
         wid.mouseReleaseEvent = lambda e: self.article_btn_cmd(widget=wid, path=path)
 
@@ -221,20 +225,20 @@ class ChildWindow(QWidget):
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.closed.emit()
+        return
         return super().closeEvent(a0)
     
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() == Qt.Key.Key_Escape:
-            self.closed.emit()
-            self.close()
-        return super().keyPressEvent(a0)
+            self.deleteLater()
+            return
+        # return super().keyPressEvent(a0)
 
 
 class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
         self.path = None
-        self.search_thread: SearchThread = None
 
         self.setWindowTitle(Cfg.app_name)
         self.base_w, self.base_h = 290, 210
@@ -302,18 +306,22 @@ class SearchApp(QWidget):
         else:
             text = text.strip()
 
-        self.child_win = ChildWindow(parent=self, title=text)
-        self.child_win.show()
+        child_win = ChildWindow(parent=self, title=text)
+        child_win.show()
 
-        self.search_thread = SearchThread(self.path, text)
-        self.search_thread.found_file.connect(lambda path: self.child_win.add_btn(path=path))
-        self.search_thread.finished.connect(self.child_win.change_title.emit)
-        self.child_win.closed.connect(lambda: self.cancel_search(self.search_thread))
-        self.search_thread.start()
+        search_thread = SearchThread(self.path, text)
+        search_thread.found_file.connect(lambda path: child_win.add_btn(path=path))
+        search_thread.finished.connect(child_win.change_title.emit)
+        child_win.closed.connect(lambda: self.cancel_search(task=search_thread, win=child_win))
+        search_thread.start()
 
-    def cancel_search(self, task: SearchThread):
+    def cancel_search(self, task: SearchThread, win: ChildWindow):
         if task.isRunning():
             task.force_stop_thread.emit()
+        try:
+            win.deleteLater()
+        except RuntimeError:
+            pass
 
     def center(self):
         screens = QGuiApplication.screens()
