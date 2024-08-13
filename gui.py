@@ -354,8 +354,7 @@ class MyApp(QApplication):
 
     def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         if a1.type() == QEvent.Type.ApplicationActivate:
-            for i in QApplication.topLevelWidgets():
-                i.show()
+            QApplication.topLevelWidgets()[0].show()
         return super().eventFilter(a0, a1)
 
 
