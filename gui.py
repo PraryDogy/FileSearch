@@ -228,13 +228,11 @@ class ChildWindow(QWidget):
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.closed.emit()
         return
-        return super().closeEvent(a0)
     
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() == Qt.Key.Key_Escape:
-            self.deleteLater()
+            self.closed.emit()
             return
-        # return super().keyPressEvent(a0)
 
 
 class SearchApp(QWidget):
@@ -318,10 +316,12 @@ class SearchApp(QWidget):
         search_thread.start()
 
     def cancel_search(self, task: SearchThread, win: ChildWindow):
+        print("cancel search")
         if task.isRunning():
             task.force_stop_thread.emit()
         try:
-            win.deleteLater()
+            ...
+            win.close()
         except RuntimeError:
             pass
 
