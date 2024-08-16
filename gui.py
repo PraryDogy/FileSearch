@@ -148,7 +148,7 @@ class DraggableLabel(QWidget):
 
 
 class ChildWindow(QWidget):
-    closed = pyqtSignal()
+    need_close = pyqtSignal()
     change_title = pyqtSignal()
 
     def __init__(self, parent: QWidget, title: str):
@@ -226,12 +226,12 @@ class ChildWindow(QWidget):
         self.main_title.setText(t)
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
-        self.closed.emit()
+        self.need_close.emit()
         return
     
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() == Qt.Key.Key_Escape:
-            self.closed.emit()
+            self.need_close.emit()
             return
 
 
@@ -312,18 +312,14 @@ class SearchApp(QWidget):
         search_thread = SearchThread(self.path, text)
         search_thread.found_file.connect(lambda path: child_win.add_btn(path=path))
         search_thread.finished.connect(child_win.change_title.emit)
-        child_win.closed.connect(lambda: self.cancel_search(task=search_thread, win=child_win))
+        child_win.need_close.connect(lambda: self.cancel_search(task=search_thread, win=child_win))
         search_thread.start()
 
     def cancel_search(self, task: SearchThread, win: ChildWindow):
-        print("cancel search")
         if task.isRunning():
             task.force_stop_thread.emit()
-        try:
-            ...
-            win.close()
-        except RuntimeError:
-            pass
+            win.hide()
+            task.finished.connect(win.deleteLater)
 
     def center(self):
         screens = QGuiApplication.screens()
