@@ -33,16 +33,16 @@ def get_finder_path():
 
 
 class SearchThread(QThread):
-    found_file = pyqtSignal(str)
-    finished = pyqtSignal()
-    force_stop_thread = pyqtSignal()
+    thread_found_file = pyqtSignal(str)
+    thread_finished = pyqtSignal()
+    thread_force_stop = pyqtSignal()
 
     def __init__(self, path: str, filename: str):
         super().__init__()
         self.path = path
         self.filename = filename
         self.stop_flag = False
-        self.force_stop_thread.connect(self.stop_thread)
+        self.thread_force_stop.connect(self.stop_thread)
 
     def stop_thread(self):
         self.stop_flag = True
@@ -57,7 +57,7 @@ class SearchThread(QThread):
                 name_b = file.lower()
 
                 if name_a in name_b or name_a == name_b:
-                    self.found_file.emit(os.path.join(root, file))
+                    self.thread_found_file.emit(os.path.join(root, file))
                     sleep(0.5)
 
                 if self.stop_flag:
@@ -148,15 +148,15 @@ class DraggableLabel(QWidget):
 
 
 class ChildWindow(QWidget):
-    need_close = pyqtSignal()
-    change_title = pyqtSignal()
+    win_cancel_thread = pyqtSignal()
+    win_title_signal = pyqtSignal()
 
     def __init__(self, parent: QWidget, title: str):
         super().__init__()
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowTitle("Поиск: " + f"\"{title}\"")
         self.title = title
-        self.change_title.connect(self.set_title)
+        self.win_title_signal.connect(self.set_title)
 
         self.setMinimumSize(400, 380)
         geo = self.geometry()
@@ -187,7 +187,7 @@ class ChildWindow(QWidget):
         if "Результаты" in self.main_title.text():
             return
 
-        t = f"Идет поиск: \"{self.title}\"" + " " + "." * self.dots_count
+        t = f"Идет поиск: \"{self.title}\"" + "." * self.dots_count
         self.dots_count += 1
 
         self.main_title.setText(t)
@@ -226,12 +226,12 @@ class ChildWindow(QWidget):
         self.main_title.setText(t)
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
-        self.need_close.emit()
+        self.win_cancel_thread.emit()
         return
     
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0.key() == Qt.Key.Key_Escape:
-            self.need_close.emit()
+            self.win_cancel_thread.emit()
             return
 
 
@@ -277,8 +277,6 @@ class SearchApp(QWidget):
         self.search_button.clicked.connect(self.btn_search_cmd)
         self.base_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        self.btns_count = 0
-
     def input_default_style(self):
         self.input_text.setStyleSheet("padding-left: 5px;")
 
@@ -306,20 +304,21 @@ class SearchApp(QWidget):
         else:
             text = text.strip()
 
-        child_win = ChildWindow(parent=self, title=text)
-        child_win.show()
+        win_search = ChildWindow(parent=self, title=text)
+        thread_search = SearchThread(self.path, text)
 
-        search_thread = SearchThread(self.path, text)
-        search_thread.found_file.connect(lambda path: child_win.add_btn(path=path))
-        search_thread.finished.connect(child_win.change_title.emit)
-        child_win.need_close.connect(lambda: self.cancel_search(task=search_thread, win=child_win))
-        search_thread.start()
+        thread_search.thread_found_file.connect(lambda path: win_search.add_btn(path=path))
+        thread_search.thread_finished.connect(win_search.win_title_signal.emit)
 
-    def cancel_search(self, task: SearchThread, win: ChildWindow):
-        if task.isRunning():
-            task.force_stop_thread.emit()
-            win.hide()
-            task.finished.connect(win.deleteLater)
+        win_search.win_cancel_thread.connect(lambda: self.cancel_search(thread_search=thread_search, win_search=win_search))
+
+        win_search.show()
+        thread_search.start()
+
+    def cancel_search(self, thread_search: SearchThread, win_search: ChildWindow):
+        if thread_search.isRunning():
+            thread_search.thread_force_stop.emit()
+            thread_search.finished.connect(win_search.deleteLater)
 
     def center(self):
         screens = QGuiApplication.screens()
@@ -351,7 +350,8 @@ class MyApp(QApplication):
     def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         if a1.type() == QEvent.Type.ApplicationActivate:
             QApplication.topLevelWidgets()[0].show()
-        return super().eventFilter(a0, a1)
+        return False
+        # return super().eventFilter(a0, a1)
 
 
 def catch_err(exc_type, exc_value, exc_traceback):
