@@ -166,12 +166,9 @@ class ChildWindow(QWidget):
         self.v_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.v_layout)
 
-        self.v_layout.addSpacerItem(QSpacerItem(0, 5))
-
-        self.v_layout.addSpacerItem(QSpacerItem(0, 5))
+        self.v_layout.addSpacerItem(QSpacerItem(0, 10))
 
         above_wid = QWidget(parent=self)
-        above_wid.setFixedHeight(30)
         above_lay = QHBoxLayout()
         above_lay.setContentsMargins(0, 0, 0, 0)
         above_lay.setSpacing(0)
@@ -187,7 +184,6 @@ class ChildWindow(QWidget):
         above_lay.addSpacerItem(QSpacerItem(10, 0))
 
         self.v_layout.addWidget(above_wid)
-        self.v_layout.addSpacerItem(QSpacerItem(0, 5))
 
         self.list_widget = QListWidget(parent=self)
         self.list_widget.setSelectionMode(QListWidget.NoSelection)
