@@ -11,7 +11,7 @@ from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDropEvent,
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QListWidget, QListWidgetItem,
                              QMessageBox, QPushButton, QSpacerItem,
-                             QVBoxLayout, QWidget)
+                             QVBoxLayout, QWidget, QFrame)
 
 from cfg import Cfg
 
@@ -34,7 +34,6 @@ def get_finder_path():
 
 class SearchThread(QThread):
     thread_found_file = pyqtSignal(str)
-    thread_finished = pyqtSignal()
     thread_force_stop = pyqtSignal()
 
     def __init__(self, path: str, filename: str):
@@ -61,7 +60,7 @@ class SearchThread(QThread):
                     sleep(0.5)
 
                 if self.stop_flag:
-                    print(f"search {self.filename} finished")
+                    print(f"search {self.filename} CANCELED")
                     self.finished.emit()
                     return
                 
@@ -225,15 +224,6 @@ class ChildWindow(QWidget):
         t = f"Результаты поиска: \"{self.title}\""
         self.main_title.setText(t)
 
-    def closeEvent(self, a0: QCloseEvent | None) -> None:
-        self.win_cancel_thread.emit()
-        return
-    
-    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
-        if a0.key() == Qt.Key.Key_Escape:
-            self.win_cancel_thread.emit()
-            return
-
 
 class SearchApp(QWidget):
     def __init__(self):
@@ -241,41 +231,69 @@ class SearchApp(QWidget):
         self.path = None
 
         self.setWindowTitle(Cfg.app_name)
-        self.base_w, self.base_h = 290, 210
+        self.base_w, self.base_h = 690, 480
         self.temp_h = self.base_h
-        self.setFixedSize(self.base_w, self.base_h)
+        # self.setFixedSize(self.base_w, self.base_h)
+        self.resize(self.base_w, self.base_h)
         self.init_ui()
         self.setFocus()
         self.center()
 
     def init_ui(self):
-        self.base_layout = QVBoxLayout()
-        self.base_layout.setContentsMargins(0, 0, 0, 0)
-        self.base_layout.setSpacing(0)
-        self.setLayout(self.base_layout)
+        self.main_layout = QHBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.setLayout(self.main_layout)
 
-        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
+        self.left_wid = QWidget(parent=self)
+        self.left_wid.setFixedWidth(250)
+        self.main_layout.addWidget(self.left_wid, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.left_layout = QVBoxLayout()
+        self.left_layout.setContentsMargins(0, 0, 0, 0)
+        self.left_layout.setSpacing(0)
+        self.left_wid.setLayout(self.left_layout)
+
+        self.left_layout.addSpacerItem(QSpacerItem(0, 10))
 
         self.get_path_wid = DraggableLabel()
-        self.get_path_wid.setFixedSize(self.base_w - 20, 100)
+        self.get_path_wid.setFixedSize(self.left_wid.width(), 100)
         self.get_path_wid.path_selected_signal.connect(self.get_path_wid_cmd)
-        self.base_layout.addWidget(self.get_path_wid, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.left_layout.addWidget(self.get_path_wid, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
+        self.left_layout.addSpacerItem(QSpacerItem(0, 10))
 
         # SEARCH INPUT
         self.input_text = QLineEdit()
-        self.input_text.setFixedSize(self.base_w - 20, 30)
+        self.input_text.setFixedSize(self.left_wid.width() - 20, 30)
         self.input_text.setStyleSheet("padding-left: 5px;")
         self.input_text.setPlaceholderText("Вставьте имя файла")
-        self.base_layout.addWidget(self.input_text)
-
-        self.base_layout.addSpacerItem(QSpacerItem(0, 10))
+        self.left_layout.addWidget(self.input_text)
 
         self.search_button = QPushButton("Поиск")
-        self.search_button.setFixedWidth(self.base_w // 2)
+        self.search_button.setFixedWidth(self.left_wid.width() // 2)
         self.search_button.clicked.connect(self.btn_search_cmd)
-        self.base_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.left_layout.addWidget(self.search_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.left_layout.addStretch(1)
+
+        self.main_layout.addSpacerItem(QSpacerItem(10, 0))
+
+        sep = QFrame(parent=self)
+        sep.setStyleSheet("background-color: black;")
+        sep.setFixedWidth(1)
+        self.main_layout.addWidget(sep)
+
+        self.r_wid = QWidget()
+        self.r_wid.setMinimumWidth(440)
+        self.r_layout = QVBoxLayout()
+        self.r_layout.setContentsMargins(0, 0, 0, 0)
+        self.r_layout.setSpacing(0)
+        self.r_wid.setLayout(self.r_layout)
+
+        self.main_layout.addWidget(self.r_wid)
+
+        self.search_thread: SearchThread = None
 
     def input_default_style(self):
         self.input_text.setStyleSheet("padding-left: 5px;")
@@ -292,6 +310,8 @@ class SearchApp(QWidget):
         return super().keyPressEvent(a0)
 
     def btn_search_cmd(self):
+        self.cancel_search()
+
         if not self.path or not os.path.exists(self.path):
             return
 
@@ -304,21 +324,24 @@ class SearchApp(QWidget):
         else:
             text = text.strip()
 
-        win_search = ChildWindow(parent=self, title=text)
-        thread_search = SearchThread(self.path, text)
+        self.wid_search = ChildWindow(parent=self, title=text)
+        self.search_thread = SearchThread(self.path, text)
 
-        thread_search.thread_found_file.connect(lambda path: win_search.add_btn(path=path))
-        thread_search.thread_finished.connect(win_search.win_title_signal.emit)
+        self.search_thread.thread_found_file.connect(lambda path: self.wid_search.add_btn(path=path))
+        self.search_thread.finished.connect(self.thread_finished)
 
-        win_search.win_cancel_thread.connect(lambda: self.cancel_search(thread_search=thread_search, win_search=win_search))
+        self.r_layout.addWidget(self.wid_search)
+        self.search_thread.start()
 
-        win_search.show()
-        thread_search.start()
+    def thread_finished(self):
+        if self.wid_search:
+            self.wid_search.win_title_signal.emit()
 
-    def cancel_search(self, thread_search: SearchThread, win_search: ChildWindow):
-        if thread_search.isRunning():
-            thread_search.thread_force_stop.emit()
-            thread_search.finished.connect(win_search.deleteLater)
+    def cancel_search(self):
+        if self.search_thread:
+            if self.search_thread.isRunning():
+                self.search_thread.thread_force_stop.emit()
+        self.clear_layout(layout=self.r_layout)
 
     def center(self):
         screens = QGuiApplication.screens()
@@ -341,6 +364,15 @@ class SearchApp(QWidget):
         a0.ignore()
         # return super().closeEvent(a0)
 
+    def clear_layout(self, layout: QVBoxLayout):
+        if layout:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
 
 class MyApp(QApplication):
     def __init__(self, argv: List[str]) -> None:
