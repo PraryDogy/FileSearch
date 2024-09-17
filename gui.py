@@ -2,19 +2,23 @@ import os
 import subprocess
 import sys
 import traceback
+from difflib import SequenceMatcher
 from time import sleep
 from typing import List
 
 from PyQt5.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import (QCloseEvent, QDragEnterEvent, QDropEvent,
                          QGuiApplication, QIcon, QKeyEvent, QMouseEvent)
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
-                             QLineEdit, QListWidget, QListWidgetItem,
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QFrame, QHBoxLayout,
+                             QLabel, QLineEdit, QListWidget, QListWidgetItem,
                              QMessageBox, QPushButton, QSpacerItem,
-                             QVBoxLayout, QWidget, QFrame)
+                             QVBoxLayout, QWidget)
 
 from cfg import Cfg
 
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
 
 def get_finder_path():
     script = '''
@@ -58,9 +62,15 @@ class SearchThread(QThread):
                 if name_a in name_b or name_a == name_b:
                     self.thread_found_file.emit(os.path.join(root, file))
                     sleep(0.5)
+                    continue
+
+                if similar(a=name_a, b=name_b) > 0.85:
+                    self.thread_found_file.emit(os.path.join(root, file))
+                    sleep(0.5)
+                    continue
 
                 if self.stop_flag:
-                    print(f"search {self.filename} CANCELED")
+                    print(f"search {self.filename} stoped")
                     self.finished.emit()
                     return
                 
