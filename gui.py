@@ -169,9 +169,24 @@ class ChildWindow(QWidget):
         self.v_layout.addSpacerItem(QSpacerItem(0, 5))
 
         self.v_layout.addSpacerItem(QSpacerItem(0, 5))
+
+        above_wid = QWidget(parent=self)
+        above_wid.setFixedHeight(30)
+        above_lay = QHBoxLayout()
+        above_lay.setContentsMargins(0, 0, 0, 0)
+        above_lay.setSpacing(0)
+        above_wid.setLayout(above_lay)
         self.main_title = QLabel(parent=self)
         self.main_title.setStyleSheet("padding-left: 5px;")
-        self.v_layout.addWidget(self.main_title)
+        above_lay.addWidget(self.main_title)
+
+        self.stop_btn = QPushButton(parent=self, text="Стоп")
+        above_lay.addWidget(self.stop_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        self.stop_btn.clicked.connect(self.win_cancel_thread.emit)
+
+        above_lay.addSpacerItem(QSpacerItem(10, 0))
+
+        self.v_layout.addWidget(above_wid)
         self.v_layout.addSpacerItem(QSpacerItem(0, 5))
 
         self.list_widget = QListWidget(parent=self)
@@ -325,6 +340,9 @@ class SearchApp(QWidget):
             text = text.strip()
 
         self.wid_search = ChildWindow(parent=self, title=text)
+        ...
+        self.wid_search.win_cancel_thread.connect(self.cancel_thread)
+        ...
         self.search_thread = SearchThread(self.path, text)
 
         self.search_thread.thread_found_file.connect(lambda path: self.wid_search.add_btn(path=path))
@@ -337,10 +355,13 @@ class SearchApp(QWidget):
         if self.wid_search:
             self.wid_search.win_title_signal.emit()
 
-    def cancel_search(self):
+    def cancel_thread(self):
         if self.search_thread:
             if self.search_thread.isRunning():
                 self.search_thread.thread_force_stop.emit()
+
+    def cancel_search(self):
+        self.cancel_thread()
         self.clear_layout(layout=self.r_layout)
 
     def center(self):
