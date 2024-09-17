@@ -340,9 +340,7 @@ class SearchApp(QWidget):
             text = text.strip()
 
         self.wid_search = ChildWindow(parent=self, title=text)
-        ...
         self.wid_search.win_cancel_thread.connect(self.cancel_thread)
-        ...
         self.search_thread = SearchThread(self.path, text)
 
         self.search_thread.thread_found_file.connect(lambda path: self.wid_search.add_btn(path=path))
