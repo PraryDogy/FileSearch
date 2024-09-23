@@ -1,3 +1,3 @@
 class Cfg:
-    app_name = "MiuzSearch"
-    app_ver: int = "1.4.0"
+    app_name = "FileSearch"
+    app_ver: int = "1.5.0"
